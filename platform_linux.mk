@@ -7,16 +7,43 @@
 #
 ############################################################
 
+CLANG_VERSION ?= 3.6
+
 #
 # CCACHE
 #
 CCACHE:=$(shell test -n "`which ccache 2&>/dev/null`"; if [ $$? -eq 0 ] ; then echo "ccache" ; fi)
 
 #
+# DISTCC
+#
+ifeq (1,$(ENABLE_DISTCC))
+DISTCC:=$(shell test -n "`which distcc 2&>/dev/null`"; if [ $$? -eq 0 ] ; then echo "distcc" ; fi)
+endif
+
+#
 # RPATH the executable dir?
 ifneq (1,$(DISABLE_EXECUTABLE_RPATH))
   _rpath_flags := -Wl,-rpath,'$$$$ORIGIN'
 endif
+
+#
+# CXX / CMM
+#
+
+ifeq (clang,$(COMPILER))
+  CXXCOMPILER:=$(shell \
+    which clang++ || which clang++-$(CLANG_VERSION) || echo -n \
+  )
+  ifeq ($(CXXCOMPILER),)
+    $(error Cannot find clang++)
+  endif
+else
+  CXXCOMPILER:=g++
+endif
+
+CXX := $(CCACHE) $(DISTCC) $(CXXCOMPILER)
+CC := $(CXX) -x c
 
 #
 # CXX / CMM FLAGS
@@ -26,29 +53,35 @@ _cxxflags_warnings := \
     -Wall -Wconversion -Wsign-compare -Wno-unknown-pragmas \
     -Wno-overloaded-virtual -Wno-trigraphs -Wno-unused-parameter
 
-CXX := $(CCACHE) g++
-CC := $(CXX) -x c
+# -Wconversion
 
 CFLAGSPRE := \
     -fmessage-length=0 -pipe \
     $(_cxxflags_warnings) \
-    -Wall \
     -fPIC \
-    -ftree-vectorize -msse3 -mssse3 \
+    -ftree-vectorize -msse3 -mssse3
+
+ifeq (clang,$(COMPILER))
+  CFLAGSPRE += -Qunused-arguments -Wno-deprecated-register
+endif
 
 CFLAGSPOST := -c
 
 # DEBUG / RELEASE
 
 ifeq ($(CONFIG),debug)
-  CFLAGSPRE += -g -O0 -D_DEBUG -DDEBUG -falign-functions=4
+  CFLAGSPRE += -g -O0 -D_DEBUG -DDEBUG
+ifneq (clang,$(COMPILER))
+  CFLAGSPRE += -falign-functions=4
+endif
 else
   CFLAGSPRE += -g -O3 -DNDEBUG
 endif
 
-CXXFLAGSPRE := $(CFLAGSPRE) -std=c++11 -Wno-reorder \
+CXXFLAGSPRE := \
+  $(CFLAGSPRE) -Wno-overloaded-virtual -std=c++11 -Wno-reorder \
   -DXP_LINUX=1 -DXP_UNIX=1 -DMOZILLA_STRICT_API
-CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions
+CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions -fpermissive
 
 PCHFLAGS := -x c++-header
 

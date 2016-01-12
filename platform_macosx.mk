@@ -19,8 +19,6 @@ ifneq (,$(MACOSX_XCODE_BIN_PATH))
 else
   # clang
   MACOSX_CXX := clang
-  CXXFLAGS += -stdlib=libc++ -Wno-c++11-extensions -Wno-c++11-long-long
-  CMMFLAGS += -stdlib=libc++ -Wno-c++11-extensions -Wno-c++11-long-long
   MACOSX_LDFLAGS += -lc++
   MACOSX_DLLFLAGS += -lc++
 endif
@@ -30,6 +28,14 @@ MACOSX_C_DEFAULTLANG ?= objective-c
 MACOSX_CXX_DEFAULTLANG ?= objective-c++
 
 # SDK to build against
+ifeq (auto,$(XCODE_SDK_VER))
+  XCODE_SDK_VER:=$(shell xcodebuild -showsdks | grep -o 'macosx.*' | sort -r | head -n 1 | grep -oe '[0-9\.]\+')
+  ifeq (,$(XCODE_SDK_VER))
+    $(error Failed to auto-detect SDK version)
+  endif
+  $(warning Using auto-detected SDK version: $(XCODE_SDK_VER))
+endif
+
 XCODE_SDK_VER ?= 10.11
 
 # Minimum OS version to target
@@ -37,10 +43,9 @@ XCODE_MIN_OS_VER ?= 10.9
 # $(XCODE_SDK_VER)
 
 # Mark builds that are linked against the non-default SDKs
-
-ifneq ($(XCODE_SDK_VER),10.11)
-  VARIANT:=$(strip $(VARIANT)-$(XCODE_SDK_VER))
-endif
+# ifneq ($(XCODE_SDK_VER),10.11)
+#   VARIANT:=$(strip $(VARIANT)-$(XCODE_SDK_VER))
+# endif
 
 # Check the known SDK install locations
 
@@ -57,13 +62,13 @@ $(call log,MACOSX BUILD CONFIGURATION)
 # CXX / CMM FLAGS
 #
 
-CC := $(CXX)
-CXX := $(MACOSX_XCODE_BIN_PATH)$(MACOSX_CXX)
+CC := $(MACOSX_XCODE_BIN_PATH)$(MACOSX_CXX)
+CXX := $(CC)
 CMM := $(CXX)
 
 _cxxflags_warnings := \
-    -Wall -Wconversion -Wsign-compare -Wsign-conversion -Wno-unknown-pragmas \
-    -Wno-overloaded-virtual -Wno-trigraphs -Wno-unused-parameter
+    -Wall -Wconversion -Wsign-compare -Wunused-parameter \
+    -Wno-unknown-pragmas -Wno-overloaded-virtual -Wno-trigraphs
 
 CFLAGSPRE := \
     -arch $(ARCH) -fmessage-length=0 -pipe \
@@ -101,10 +106,9 @@ endif
 # -fvisibility=hidden
 
 CXXFLAGSPRE := -x $(MACOSX_CXX_DEFAULTLANG) -std=c++11 -fno-exceptions \
+  -Wno-c++11-extensions -Wno-c++11-long-long -Wno-undeclared-selector \
   $(CFLAGSPRE)
-CMMFLAGSPRE := -x objective-c++ -std=c++11 -fno-exceptions \
-  -Wno-undeclared-selector \
-  $(CFLAGSPRE)
+CMMFLAGSPRE := $(CXXFLAGSPRE)
 CFLAGSPRE := -x $(MACOSX_C_DEFAULTLANG) $(CFLAGSPRE)
 
 CXXFLAGSPOST := $(CFLAGSPOST)

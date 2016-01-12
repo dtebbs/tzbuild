@@ -1,4 +1,4 @@
-# Copyright (c) 2013 Turbulenz Limited.
+# Copyright (c) 2015 Turbulenz Limited.
 # Released under "Modified BSD License".  See COPYING for full text.
 
 ifeq ($(BUILDDIR),)
@@ -16,137 +16,28 @@ ABSPATHS ?= 1
 # Disable all build-in rules
 .SUFFIXES:
 
-#
-# Platform stuff.  Determine the build host
-#
-_shell_base := $(notdir $(SHELL))
-ifneq (,$(filter %.exe,$(_shell_base)))
-  UNAME := win32
-  # This avoids problems where sh.exe exists in the path, but has
-  # spaces in it.
-  override SHELL := cmd.exe
-else
-  UNAME := $(shell uname)
-endif
+############################################################
+# Get basic platform info (HOST and TARGET)
+############################################################
 
-# $(warning UNAME = $(UNAME))
-# $(warning SHELL = $(SHELL))
-
-# macosx
-ifeq ($(UNAME),Darwin)
-  BUILDHOST := macosx
-endif
-
-# linux32/64
-ifeq ($(UNAME),Linux)
-  M_ARCH := $(shell uname -m)
-  ifeq ($(M_ARCH),x86_64)
-    BUILDHOST := linux64
-  else
-    ifeq ($(M_ARCH),i686)
-      BUILDHOST := linux32
-    else
-      $(error Unsupported architecture: $(M_ARCH))
-    endif
-  endif
-endif
-
-# Check for unsupported build host
-ifeq ($(UNAME),)
-  $(warning Couldnt determine BUILDHOST from uname: $(UNAME), assuming win32)
-  UNAME := win32
-endif
-
-ifeq ($(UNAME),win32)
-  BUILDHOST := win32
-  ABSPATHS := 0
-  UNITY := 0
-endif
-
-# Set TARGET if it hasn't been determined, and based on that, set
-# TARGETNAME:
-#
-#  TARGET = linux32, linux64, macosx, win32, win64, android, ...
-#  TARGETNAME = linux, macosx, win, android, ...
-#  ARCH = i386,x86_64,armv7a
-#  PKGARCH = x86,amd64
-
-ifeq ($(TARGET),)
-  TARGET ?= $(BUILDHOST)
-endif
-
-ifeq ($(TARGET),macosx)
-  COMPILER ?= clang
-  TARGETNAME := macosx
-  ARCH ?= i386
-endif
-
-ifeq ($(TARGET),android)
-  TARGETNAME := android
-  ARCH ?= armv7a
-  COMPILER ?= gcc
-endif
-
-ifeq ($(TARGET),linux64)
-  TARGETNAME := linux
-  ARCH ?= x86_64
-  COMPILER ?= gcc
-  PKGARCH ?= amd64
-endif
-
-ifeq ($(TARGET),linux32)
-  TARGETNAME := linux
-  ARCH ?= i386
-  COMPILER ?= gcc
-  PKGARCH ?= x86
-endif
-
-ifeq ($(TARGET),win32)
-  TARGETNAME := win
-  ARCH ?= i386
-  COMPILER ?= vs2013
-  VARIANT:=-$(COMPILER)$(VARIANT)
-endif
-
-ifeq ($(TARGET),win64)
-  TARGETNAME := win
-  ARCH ?= x86_64
-  COMPILER ?= vs2013
-  VARIANT:=-$(COMPILER)$(VARIANT)
-endif
-
-ifeq ($(TARGET),iossim)
-  # 'iossim' is shorthand for TARGET=ios, ARCH=i386
-  override TARGET := ios
-  ARCH ?= x86_64
-endif
-
-ifeq ($(TARGET),ios)
-  TARGETNAME := ios
-  ARCH ?= armv7
-  COMPILER ?= clang
-  VARIANT:=-$(ARCH)$(VARIANT)
-endif
-
-# Give the client a chance to define their own configuration code and
-# platforms.
--include $(CUSTOMSCRIPTS)/tzbuild_config.mk
-
-# unknown
-ifeq ($(TARGETNAME),)
-  $(error Couldnt determine TARGETNAME from TARGET: $(TARGET))
-endif
+include $(BUILDDIR)/config_platform_info.mk
+# $(info tzbuild: config.mk: called config_platform_info.mk)
 
 ############################################################
 # CONFIG default settings
 ############################################################
 
 ifeq ($(CONFIG),release)
-  C_SYMBOLS ?= 0
+  C_SYMBOLS ?= 1
   C_OPTIMIZE ?= 1
   LD_OPTIMIZE ?= 0    # Keep LTO off by default
 endif
 ifeq ($(CONFIG),debug)
+  C_SYMBOLS ?= 1
+  C_OPTIMIZE ?= 0
+  LD_OPTIMIZE ?= 0
+endif
+ifeq ($(CONFIG),development)
   C_SYMBOLS ?= 1
   C_OPTIMIZE ?= 0
   LD_OPTIMIZE ?= 0
@@ -242,7 +133,7 @@ _dir_marker = $(foreach d,$(1),$(d).mkdir)
 # 1 - directory name
 define _create_mkdir_rule
 
-  $(if $(filter $(1),$(_TZ_DIRS)),$(error alrady have rule for dir: $1))
+  $(if $(filter $(1),$(_TZ_DIRS)),$(error already have rule for dir: $1))
 
   $(call _dir_marker,$(1)) :
 	@echo "[MKDIR] $1"

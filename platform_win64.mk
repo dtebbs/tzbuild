@@ -214,22 +214,25 @@ endif
 # Setup based on vs version
 ############################################################
 
+ifeq (vs2015,$(COMPILER))
+  ifeq (,$(VS140COMNTOOLS))
+    $(warning VS140COMNTOOLS env var not set.  Is Visual Studio 2015 installed?)
+	$(warning Falling back to Visual Studio 2013)
+    override COMPILER := vs2013
+  else
+    VCBASEDIR:=$(VS140COMNTOOLS)/../../VC
+    # WINKITDIR:=$(VS140COMNTOOLS)/../../../Windows Kits/10
+    WINKITDIR:=$(VS140COMNTOOLS)/../../../Windows Kits/8.1
+    UCRTDIR:=$(WINKITDIR)/../10/Include/10.0.10150.0/ucrt
+  endif
+endif
+
 ifeq (vs2013,$(COMPILER))
   ifeq (,$(VS120COMNTOOLS))
     $(error VS120COMNTOOLS env var is not set.  Is Visual Studio 2013 installed?)
   endif
   VCBASEDIR:=$(VS120COMNTOOLS)/../../VC
   WINKITDIR:=$(VS120COMNTOOLS)/../../../Windows Kits/8.1
-endif
-
-ifeq (vs2015,$(COMPILER))
-  ifeq (,$(VS140COMNTOOLS))
-    $(error VS140COMNTOOLS env var is not set.  Is Visual Studio 2015 installed?)
-  endif
-  VCBASEDIR:=$(VS140COMNTOOLS)/../../VC
-  # WINKITDIR:=$(VS140COMNTOOLS)/../../../Windows Kits/10
-  WINKITDIR:=$(VS140COMNTOOLS)/../../../Windows Kits/8.1
-  UCRTDIR:=$(WINKITDIR)/../10/Include/10.0.10150.0/ucrt
 endif
 
 ifeq (,$(VCBASEDIR))
@@ -260,21 +263,28 @@ endif
 # $(info VSBINDIR = $(VSBINDIR))
 # $(info ARCH = $(ARCH))
 
+# Windows-specific stuff in 'development' config
+
+ifeq (development,$(CONFIG))
+  CXXFLAGSPRE += -D_ITERATOR_DEBUG_LEVEL=0
+endif
+
 ############################################################
 # CXX
 ############################################################
 
 CXX := "$(VCBINDIR)/cl.exe"
-CXXFLAGSPRE += /W4 /errorReport:prompt /nologo /analyze- /fp:fast /Gy \
+CXXFLAGSPRE += /W4 /WX /errorReport:prompt /nologo /analyze- /fp:fast /Gy \
   /Zc:wchar_t /Zc:forScope /GR /Gm- /EHsc /FS \
   -D_WINDOWS -D_USRDLL -DWIN32 -DWIN32_LEAN_AND_MEAN \
-  -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS \
+  -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS
+CXXFLAGSPOST += \
   -I"$(VCBASEDIR)/include" \
   -I"$(WINKITDIR)/Include/shared" \
   -I"$(WINKITDIR)/Include/um" \
 
 ifneq (,$(UCRTDIR))
-  CXXFLAGSPRE += -I"$(UCRTDIR)"
+  CXXFLAGSPOST += -I"$(UCRTDIR)"
 endif
 
 # /WX

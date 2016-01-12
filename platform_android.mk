@@ -233,7 +233,7 @@ endif
 CXX = $(CC)
 
 CFLAGSPRE += \
-  -ffunction-sections -funwind-tables -fno-rtti -fstrict-aliasing \
+  -ffunction-sections -funwind-tables -fstrict-aliasing \
   -Wall -Wno-unknown-pragmas -Wno-trigraphs \
   -Wno-unused-parameter \
   -DANDROID -DTZ_ANDROID -DTZ_USE_V8
@@ -293,13 +293,13 @@ endif
 ifeq ($(C_SYMBOLS),1)
   CFLAGSPOST += -g
 else
+endif
   dll-post = \
     $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)strip --strip-unneeded \
     $($(1)_dllfile)
-endif
 CFLAGSPOST += -c
 
-CXXFLAGSPRE := $(CFLAGSPRE) -std=c++11 -Wno-reorder
+CXXFLAGSPRE := $(CFLAGSPRE) -std=c++11 -Wno-reorder -fno-rtti
 CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions $(addprefix -I,$(NDK_STL_INCLUDES))
 
 CFLAGSPOST += -x c -std=c99
