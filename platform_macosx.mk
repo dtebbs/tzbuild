@@ -23,6 +23,8 @@ else
   MACOSX_DLLFLAGS += -lc++
 endif
 
+MACOSX_EXT_DLL_RPATH ?= @loader_path
+
 # Language to compile all .c and .cpp files as
 MACOSX_C_DEFAULTLANG ?= objective-c
 MACOSX_CXX_DEFAULTLANG ?= objective-c++
@@ -65,6 +67,11 @@ $(call log,MACOSX BUILD CONFIGURATION)
 CC := $(MACOSX_XCODE_BIN_PATH)$(MACOSX_CXX)
 CXX := $(CC)
 CMM := $(CXX)
+CLANG_TIDY := /usr/local/opt/llvm/bin/clang-tidy
+
+CSYSTEMFLAGS := \
+    -isysroot $(XCODE_SDK_ROOT) \
+    -mmacosx-version-min=$(XCODE_MIN_OS_VER) \
 
 _cxxflags_warnings := \
     -Wall -Wconversion -Wsign-compare -Wunused-parameter \
@@ -76,8 +83,6 @@ CFLAGSPRE := \
     -fstrict-aliasing -fno-threadsafe-statics \
     -msse3 -mssse3 \
     $(_cxxflags_warnings) \
-    -isysroot $(XCODE_SDK_ROOT) \
-    -mmacosx-version-min=$(XCODE_MIN_OS_VER) \
     -fvisibility-inlines-hidden \
     -fvisibility=hidden \
     -DXP_MACOSX=1 -DMACOSX=1
@@ -105,6 +110,7 @@ endif
 # -fno-exceptions
 # -fvisibility=hidden
 
+CXXSYSTEMFLAGS := $(CSYSTEMFLAGS)
 CXXFLAGSPRE := -x $(MACOSX_CXX_DEFAULTLANG) -std=c++11 -fno-exceptions \
   -Wno-c++11-extensions -Wno-c++11-long-long -Wno-undeclared-selector \
   $(CFLAGSPRE)
@@ -174,11 +180,12 @@ DLLFLAGS_LIB := -l
 dllprefix :=
 dllsuffix := .dylib
 
+
 dll-post = \
   $(CMDPREFIX) for d in $($(1)_ext_dlls) ; do \
     in=`$(MACOSX_XCODE_BIN_PATH)otool -D $$$$d | grep -v :`; \
     bn=`basename $$$$d`; \
-    $(MACOSX_XCODE_BIN_PATH)install_name_tool -change $$$$in @loader_path/$$$$bn $$@ ; \
+    $(MACOSX_XCODE_BIN_PATH)install_name_tool -change $$$$in $(MACOSX_EXT_DLL_RPATH)/$$$$bn $$@ ; \
   done
 
 #

@@ -12,6 +12,8 @@ CMDVERBOSE ?= 0
 CONFIG ?= release
 VALGRIND ?= 0
 ABSPATHS ?= 1
+UNITY ?= 1
+PCH ?= 1
 
 # Disable all build-in rules
 .SUFFIXES:
@@ -31,16 +33,25 @@ ifeq ($(CONFIG),release)
   C_SYMBOLS ?= 1
   C_OPTIMIZE ?= 1
   LD_OPTIMIZE ?= 0    # Keep LTO off by default
+  WIN_DLL=release
+endif
+ifeq ($(CONFIG),release-noltcg)
+  C_SYMBOLS ?= 1
+  C_OPTIMIZE ?= 1
+  LD_OPTIMIZE ?= 0    # Keep LTO off by default
+  WIN_DLL=release
 endif
 ifeq ($(CONFIG),debug)
   C_SYMBOLS ?= 1
   C_OPTIMIZE ?= 0
   LD_OPTIMIZE ?= 0
+  WIN_DLL=debug
 endif
 ifeq ($(CONFIG),development)
   C_SYMBOLS ?= 1
   C_OPTIMIZE ?= 0
   LD_OPTIMIZE ?= 0
+  WIN_DLL=debug
 endif
 
 ############################################################
@@ -93,15 +104,18 @@ endif
 CP := python $(BUILDDIR)/commands/cp.py
 CAT := python $(BUILDDIR)/commands/cat.py
 MKDIR := python $(BUILDDIR)/commands/mkdir.py
-RM := python $(BUILDDIR)/commands/rm.py
 FIND := python $(BUILDDIR)/commands/find.py
+RELPATH := python $(BUILDDIR)/commands/relpath.py
 TSC ?= tsc
 MAKE_APK_PROJ := python $(BUILDDIR)/commands/make_android_project.py
+CLANG_TIDY ?= clang-tidy
 
-ifeq (win32,$(BUILDHOST))
+ifneq (,$(filter win%,$(BUILDHOST)))
+  RM := python $(BUILDDIR)/commands/rm.py
   TRUE := cmd /c "exit /b 0"
   FALSE := cmd /c "exit /b 1"
 else
+  RM := rm
   TRUE := true
   FALSE := false
 endif

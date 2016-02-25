@@ -241,9 +241,11 @@ endif
 
 ifeq (win32,$(TARGET))
   VCBINDIR:=$(VCBASEDIR)/bin
+  VCLIBDIR:=$(VCBASEDIR)/lib
 else
   ifeq (win64,$(TARGET))
     VCBINDIR:=$(VCBASEDIR)/bin/amd64
+    VCLIBDIR:=$(VCBASEDIR)/lib/amd64
     # ifeq (,$(shell which "$(VCBINDIR)"/cl.exe 2>NUL))
     #   # On a 64-bit machine, the x86_amd64 tools tend to require the
     #   # vcvars variables to be set up in order to find the correct
@@ -259,6 +261,10 @@ else
   endif
 endif
 
+# WINSDK_VERSION ?= 10.0A
+# ifeq (,$(WINSDKDIR))
+#   WINSDKDIR := $(VCBASEDIR)/
+
 # $(info VS120COMNTOOLS = $(VS120COMNTOOLS))
 # $(info VSBINDIR = $(VSBINDIR))
 # $(info ARCH = $(ARCH))
@@ -273,11 +279,13 @@ endif
 # CXX
 ############################################################
 
+CC := "$(VCBINDIR)/cl.exe"
 CXX := "$(VCBINDIR)/cl.exe"
 CXXFLAGSPRE += /W4 /WX /errorReport:prompt /nologo /analyze- /fp:fast /Gy \
   /Zc:wchar_t /Zc:forScope /GR /Gm- /EHsc /FS \
   -D_WINDOWS -D_USRDLL -DWIN32 -DWIN32_LEAN_AND_MEAN \
-  -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS
+  -D_CRT_SECURE_NO_DEPRECATE -D_SCL_SECURE_NO_WARNINGS \
+  -D_HAS_EXCEPTIONS=0
 CXXFLAGSPOST += \
   -I"$(VCBASEDIR)/include" \
   -I"$(WINKITDIR)/Include/shared" \
@@ -295,20 +303,29 @@ ifeq (i386,$(ARCH))
 endif
 
 ifeq (1,$(C_OPTIMIZE))
-  CXXFLAGSPRE += /O2 /MD -DNEDBUG
-  ifeq (i386,$(ARCH))
-    CXXFLAGSPRE += /Oy
-  endif
+  CXXFLAGSPRE += /Ob2ity -DNEDBUG
+  # ifeq (i386,$(ARCH))
+  #   CXXFLAGSPRE += /Oy
+  # endif
 else
-  CXXFLAGSPRE += /GS /Od /RTC1 /MDd -DDEBUG -D_DEBUG
+  CXXFLAGSPRE += /GS /Od /RTC1 -DDEBUG -D_DEBUG
   ifeq (i386,$(ARCH))
     CXXFLAGSPRE += /Oy-
   endif
 endif
 
+ifeq (release,$(WIN_DLL))
+  CXXFLAGSPRE += /MD
+else
+  CXXFLAGSPRE += /MDd
+endif
+
 # ifeq (1$(C_SYMBOLS))
   CXXFLAGSPRE +=  /Zi
 # endif
+
+CFLAGSPRE := $(CXXFLAGSPRE)
+CFLAGSPOST := $(CXXFLAGSPOST)
 
 cdeps := ""
 cout := /Fo:
@@ -386,5 +403,36 @@ endif
 
 dllprefix :=
 dllsuffix := .dll
+
+LD := "$(VCBINDIR)/link.exe"
+LDFLAGSPRE := \
+  /MANIFEST /NXCOMPAT  \
+  /DYNAMICBASE \
+  "winmm.lib" "ws2_32.lib" "gdi32.lib" "user32.lib" "advapi32.lib" "ole32.lib" \
+  "shell32.lib" "version.lib"
+# "dinput8.lib" "XInput9_1_0.lib" "dxguid.lib"
+
+LDFLAGSPOST += \
+  /BASE:"0x23400000" \
+  /MACHINE:X64 \
+
+ifeq (1,$(C_OPTIMIZE))
+  LDFLAGSPOST += /OPT:REF /INCREMENTAL:NO /OPT:ICF \
+    /NODEFAULTLIB:"libcmt.lib" /NODEFAULTLIB:"libcpmt.lib"
+else
+  LDFLAGSPOST += "dbghelp.lib" \
+    /NODEFAULTLIB:"libcmt.lib" /NODEFAULTLIB:"libcpmt.lib"
+    /NODEFAULTLIB:"msvcrt.lib"  \
+    /INCREMENTAL
+endif
+
+LDFLAGSPOST += \
+  /MANIFESTUAC:"level='asInvoker' uiAccess='false'"  \
+  /NOLOGO /ERRORREPORT:PROMPT  \
+  /TLBID:1
+
+LDFLAGS_PDB := /PDB:
+appout := /OUT:
+binsuffix := .exe
 
 $(info Entering directory `$(shell echo %CD%)')

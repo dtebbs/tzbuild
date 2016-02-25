@@ -31,6 +31,8 @@ libsuffix?=.a
 
 dllout?= -o #
 
+appout?= -o #
+
 #
 # Platform Checks
 #
@@ -305,16 +307,18 @@ endif #($(UNITY),1)
 #
 
 # for each module, if _pch is set, we need vars:
-$(foreach mod,$(C_MODULES), \
-  $(if $($(mod)_pch), \
-    $(eval \
-      _$(mod)_pchfile := $($(mod)_OBJDIR)/$(notdir $($(mod)_pch:.h=.h.gch)) \
+ifeq (1,$(PCH))
+  $(foreach mod,$(C_MODULES), \
+    $(if $($(mod)_pch), \
+      $(eval \
+        _$(mod)_pchfile := $($(mod)_OBJDIR)/$(notdir $($(mod)_pch:.h=.h.gch)) \
+      ) \
+      $(eval \
+        _$(mod)_pchdep := $($(mod)_DEPDIR)/$(notdir $($(mod)_pch:.h=.h.d)) \
+      ) \
     ) \
-    $(eval \
-      _$(mod)_pchdep := $($(mod)_DEPDIR)/$(notdir $($(mod)_pch:.h=.h.d)) \
-    ) \
-  ) \
-)
+  )
+endif
 
 #
 # For each module, create cxx_obj_dep list
@@ -408,7 +412,7 @@ define _make_cxx_flags_file
   #   $$(shell echo '$(strip $(3))' > $(2))
   # endif
 
-  $($(1)_OBJECTS) : $(2)
+  $($(1)_OBJECTS) $(_$(1)_pchfile) : $(2)
 endef
 
 ifneq (1,$(DISABLE_FLAG_CHECKS))
@@ -484,12 +488,14 @@ define _make_pch_rule
 	@$(MKDIR) -p $($(1)_OBJDIR) $($(1)_DEPDIR)
 	@echo [PCH $(ARCH)] \($(1)\) $$(notdir $$@)
 	$(CMDPREFIX)$(CXX)                                              \
-      $(filter-out $($(1)_remove_cxxflags),                         \
-        $(CXXFLAGSPRE) $(CXXFLAGS)                                  \
-        $($(1)_depcxxflags) $($(1)_cxxflags) $($(1)_local_cxxflags) \
-      )                                                             \
-      $(cdeps) $4 $(cdeptarget) $(cdeptargetpre)$4$(cdeptargetpost) \
-      $(cdeptarget) $(cdeptargetpre)$$@$(cdeptargetpost)            \
+      $(filter-out $($(1)_remove_cxxflags),                              \
+        $(CXXSYSTEMFLAGS) $(CXXFLAGSPRE) $(CXXFLAGS) $($(1)_depcxxflags) \
+        $($(1)_cxxflags) $($(1)_local_cxxflags)                          \
+      )                                                                  \
+      $(if $(DISABLE_DEP_GEN),,                                          \
+        $(cdeps) $4 $(cdeptarget) $(cdeptargetpre)$4$(cdeptargetpost)    \
+        $(cdeptarget) $(cdeptargetpre)$$@$(cdeptargetpost)               \
+      )                                                                  \
       $(addprefix -I,$($(1)_incdirs))                               \
       $(addprefix -I,$($(1)_depincdirs))                            \
       $(addprefix -I,$($(1)_ext_incdirs))                           \
@@ -497,8 +503,7 @@ define _make_pch_rule
         $(CXXFLAGSPOST) $($(call file_flags,$(2)))                  \
       )                                                             \
       $(PCHFLAGS)                                                   \
-      $$< $(cout) $$@
-
+      $(cout)$$@ $(csrc) $$< || ($(RM) -f $(3) $(4) && exit 1)
 
 endef
 
@@ -515,11 +520,12 @@ define _make_c_object_rule
 	@echo [CC $(TARGET)-$(ARCH)] \($(1)\) $$(notdir $$<)
 	$(CMDPREFIX)$(CC)                                                   \
       $(if $(_$1_pchfile),-include $(_$1_pchfile:.gch=))                \
-        $(CFLAGSPRE) $(CFLAGS)                                          \
-        $($(1)_depcxxflags) $($(1)_cflags) $($(1)_local_cflags)         \
+      $(CSYSTEMFLAGS) $(CFLAGSPRE) $(CFLAGS)                            \
+      $($(1)_depcxxflags) $($(1)_cflags) $($(1)_local_cflags)           \
       $(if $(DISABLE_DEP_GEN),,                                         \
         $(cdeps) $4 $(cdeptarget) $(cdeptargetpre)$4$(cdeptargetpost)   \
         $(cdeptarget) $(cdeptargetpre)$$@$(cdeptargetpost)              \
+        $(cdeptarget) $(cdeptargetpre)$(3).clang-tidy$(cdeptargetpost)  \
       )                                                                 \
       $(addprefix -I,$($(1)_incdirs))                                   \
       $(addprefix -I,$($(1)_depincdirs))                                \
@@ -534,6 +540,27 @@ define _make_c_object_rule
 
   $(1)_asm : $(3).S
 
+  $(3).clang-tidy : $(2)
+	$(CMDPREFIX)$(MKDIR) $($(1)_OBJDIR) $($(1)_DEPDIR)
+	@echo [CC TIDY $(TARGET)-$(ARCH)] \($(1)\) $$<
+	$(CMDPREFIX)if (! $(CLANG_TIDY) $$< --                              \
+      $(if $(_$1_pchfile),-include $(_$1_pchfile:.gch=))                \
+      $(CFLAGSPRE) $(CFLAGS)                                            \
+      $($(1)_depcxxflags) $($(1)_cflags) $($(1)_local_cflags)           \
+      $(addprefix -I,$($(1)_incdirs))                                   \
+      $(addprefix -I,$($(1)_depincdirs))                                \
+      $(addprefix -I,$($(1)_ext_incdirs))                               \
+      $(CFLAGSPOST) $($(call file_flags,$(2)))                          \
+      $(cout)$$@ $(csrc) $$< > $$@ 2>&1) ||                             \
+      ( grep -e 'warning:' -e 'error:' $$@ ) ; then                     \
+        cat $$@ ; rm $$@ ; $(FALSE) ;                                   \
+      fi
+
+  ifneq (1,$($(1)_no_tidy))
+    $(1)_tidy : $(3).clang-tidy
+    $(1)_cleanfiles += $(3).clang-tidy
+  endif
+
 endef
 
 # 1 - mod
@@ -547,24 +574,24 @@ define _make_cxx_object_rule
   $(3) : $(2) $(_$1_pchfile)
 	$(CMDPREFIX)$(MKDIR) $($(1)_OBJDIR) $($(1)_DEPDIR)
 	@echo [CXX $(TARGET)-$(ARCH)] \($(1)\) $$(notdir $$<)
-	$(CMDPREFIX)$(CXX)                                                  \
-      $(if $(_$1_pchfile),-include $(_$1_pchfile:.gch=))                \
-      $(filter-out $($(1)_remove_cxxflags),                             \
-        $(CXXFLAGSPRE) $(CXXFLAGS) $($(1)_depcxxflags)                  \
-        $($(1)_cxxflags) $($(1)_local_cxxflags)                         \
-      )                                                                 \
-      $(if $(DISABLE_DEP_GEN),,                                         \
-        $(cdeps) $4 $(cdeptarget) $(cdeptargetpre)$4$(cdeptargetpost)   \
-        $(cdeptarget) $(cdeptargetpre)$$@$(cdeptargetpost)              \
-      )                                                                 \
-      $($(1)_depcxxflags) $($(1)_cxxflags) $($(1)_local_cxxflags)       \
-      $(addprefix -I,$($(1)_incdirs))                                   \
-      $(addprefix -I,$($(1)_depincdirs))                                \
-      $(addprefix -I,$($(1)_ext_incdirs))                               \
-      $(filter-out $($(1)_remove_cxflags),                              \
-        $(CXXFLAGSPOST) $($(call file_flags,$(2)))                      \
-      )                                                                 \
-      $(cout)$$@ $(csrc) $$< || ($(RM) $(3) $(4) && exit 1)
+	$(CMDPREFIX)$(CXX)                                                   \
+      $(if $(_$1_pchfile),-include $(_$1_pchfile:.gch=))                 \
+      $(filter-out $($(1)_remove_cxxflags),                              \
+        $(CXXSYSTEMFLAGS) $(CXXFLAGSPRE) $(CXXFLAGS) $($(1)_depcxxflags) \
+        $($(1)_cxxflags) $($(1)_local_cxxflags)                          \
+      )                                                                  \
+      $(if $(DISABLE_DEP_GEN),,                                          \
+        $(cdeps) $4 $(cdeptarget) $(cdeptargetpre)$4$(cdeptargetpost)    \
+        $(cdeptarget) $(cdeptargetpre)$$@$(cdeptargetpost)               \
+        $(cdeptarget) $(cdeptargetpre)$(3).clang-tidy$(cdeptargetpost)   \
+      )                                                                  \
+      $(addprefix -I,$($(1)_incdirs))                                    \
+      $(addprefix -I,$($(1)_depincdirs))                                 \
+      $(addprefix -I,$($(1)_ext_incdirs))                                \
+      $(filter-out $($(1)_remove_cxflags),                               \
+        $(CXXFLAGSPOST) $($(call file_flags,$(2)))                       \
+      )                                                                  \
+      $(cout)$$@ $(csrc) $$< || ($(RM) -f $(3) $(4) && exit 1)
 	$(call cxx-post,$(1),$(2),$(3),$(4))
 
   $(2):
@@ -576,6 +603,32 @@ define _make_cxx_object_rule
 	$(OBJDUMP) $(OBJDUMP_DISASS) $$< > $$@
 
   $(1)_asm : $(3).S
+
+  $(3).clang-tidy : $(2)
+	$(CMDPREFIX)$(MKDIR) $($(1)_OBJDIR) $($(1)_DEPDIR)
+	@echo [CXX TIDY $(TARGET)-$(ARCH)] \($(1)\) $$<
+	$(CMDPREFIX)if (! $(CLANG_TIDY) $$< --                              \
+      $(if $(_$1_pchfile),-include $(_$1_pchfile:.gch=))                \
+      $(filter-out $($(1)_remove_cxxflags),                             \
+        $(CXXFLAGSPRE) $(CXXFLAGS) $($(1)_depcxxflags)                  \
+        $($(1)_cxxflags) $($(1)_local_cxxflags)                         \
+      )                                                                 \
+      $($(1)_depcxxflags) $($(1)_cxxflags) $($(1)_local_cxxflags)       \
+      $(addprefix -I,$($(1)_incdirs))                                   \
+      $(addprefix -I,$($(1)_depincdirs))                                \
+      $(addprefix -I,$($(1)_ext_incdirs))                               \
+      $(filter-out $($(1)_remove_cxflags),                              \
+        $(CXXFLAGSPOST) $($(call file_flags,$(2)))                      \
+      )                                                                 \
+      $(cout)$$@ $(csrc) $$< > $$@ 2>&1 ) ||                            \
+      grep -e 'warning:' -e 'error:' $$@ ; then                         \
+        cat $$@ ; rm $$@ ; $(FALSE) ;                                   \
+      fi
+
+  ifneq (1,$($(1)_no_tidy))
+    $(1)_tidy : $(3).clang-tidy
+    $(1)_cleanfiles += $(3).clang-tidy
+  endif
 
 endef
 
@@ -590,20 +643,20 @@ define _make_cmm_object_rule
   $(3) : $(2) $(_$1_pchfile)
 	@mkdir -p $($(1)_OBJDIR) $($(1)_DEPDIR)
 	@echo [CMM $(TARGET)-$(ARCH)] \($(1)\) $$(notdir $$<)
-	$(CMDPREFIX)$(CMM)                                                  \
-      $(if $(_$1_pchfile),-include $(_$1_pchfile:.gch=))                \
-      $(filter-out $($(1)_remove_cxflags),                              \
-        $(CMMFLAGSPRE) $(CMMFLAGS) $($(1)_depcxxflags)                  \
-        $($(1)_cxxflags) $($(1)_local_cxxflags)                         \
-      )                                                                 \
-      $(cdeps) $4 $(cdeptarget) $(cdeptargetpre)$4$(cdeptargetpost)     \
-      $(cdeptarget) $(cdeptargetpre)$$@$(cdeptargetpost)                \
-      $(addprefix -I,$($(1)_incdirs))                                   \
-      $(addprefix -I,$($(1)_depincdirs))                                \
-      $(addprefix -I,$($(1)_ext_incdirs))                               \
-      $(filter-out $($(1)_remove_cxflags),                              \
-        $(CMMFLAGSPOST) $($(call file_flags,$(2)))                      \
-      )                                                                 \
+	$(CMDPREFIX)$(CMM)                                                   \
+      $(if $(_$1_pchfile),-include $(_$1_pchfile:.gch=))                 \
+      $(filter-out $($(1)_remove_cxflags),                               \
+        $(CXXSYSTEMFLAGS) $(CMMFLAGSPRE) $(CMMFLAGS) $($(1)_depcxxflags) \
+        $($(1)_cxxflags) $($(1)_local_cxxflags)                          \
+      )                                                                  \
+      $(cdeps) $4 $(cdeptarget) $(cdeptargetpre)$4$(cdeptargetpost)      \
+      $(cdeptarget) $(cdeptargetpre)$$@$(cdeptargetpost)                 \
+      $(addprefix -I,$($(1)_incdirs))                                    \
+      $(addprefix -I,$($(1)_depincdirs))                                 \
+      $(addprefix -I,$($(1)_ext_incdirs))                                \
+      $(filter-out $($(1)_remove_cxflags),                               \
+        $(CMMFLAGSPOST) $($(call file_flags,$(2)))                       \
+      )                                                                  \
       $$< $(cout) $$@
 
 endef
@@ -619,7 +672,7 @@ define _make_object_rules
   )
 
   $(foreach sod,$($(1)_cxx_obj_dep), \
-    $(if $(filter %.cpp,$(call _getsrc,$(sod))), \
+    $(if $(filter %.cpp %.cc,$(call _getsrc,$(sod))), \
       $(eval $(call _make_cxx_object_rule,$(1), \
         $(call _getsrc,$(sod)), \
         $(call _getobj,$(sod)), \
@@ -637,9 +690,9 @@ define _make_object_rules
     $(call _make_cmm_object_rule,$(1),$(call _getsrc,$(sod)),$(call _getobj,$(sod)),$(call _getdep,$(sod))) \
   ))
 
-  # Define the phony _asm target for this module
-  .PHONY: $(1)_asm
-
+  # Define the phony _asm and _tidy targets for this module
+  .PHONY: $(1)_asm $(1)_tidy
+  $(1)_tidy :  $(foreach d,$($(1)_deps),$(d)_tidy)
 endef
 
 $(foreach mod,$(C_MODULES),$(eval $(call _make_object_rules,$(mod))))
@@ -681,7 +734,7 @@ define _make_lib_rule
   $($(1)_libfile) : $($(1)_OBJECTS)
 	$(CMDPREFIX)$(MKDIR) $$(dir $$@)
 	@echo [AR  $(TARGET)-$(ARCH)] $$(notdir $$@)
-	$(CMDPREFIX)$(RM) $$@
+	$(CMDPREFIX)$(RM) -f $$@
 	$(CMDPREFIX)$(AR) \
      $(ARFLAGSPRE) \
      $(arout)$$@ \
@@ -764,9 +817,15 @@ $(foreach dll,$(DLLS),$(eval \
 
 # APPLICATIONS
 
+# 1 - app
+define _make_app_paths
+  $(1)_appfile ?= $(BINDIR)/$(app)$(binsuffix)
+  $(1)_pdbfile ?= $$($(1)_appfile:$(binsuffix)=$(pdbsuffix))
+endef
+
 # calc <app>_appfile
 $(foreach app,$(APPS),$(eval \
-  $(app)_appfile ?= $(BINDIR)/$(app)$(binsuffix) \
+  $(call _make_app_paths,$(app)) \
 ))
 
 # calc <app>_depdlls (for platforms that dont have export libs
@@ -799,7 +858,8 @@ define _make_app_rule
       $($(1)_ext_lib_flags) \
       $(LDFLAGSPOST) \
       $($(1)_LDFLAGS) \
-      -o $$@
+      $(if $(pdbsuffix),$(LDFLAGS_PDB)$($(1)_pdbfile)) \
+      $(appout)$$@
 	$(call app-post,$(1))
 	$($(1)_poststep)
 
@@ -850,7 +910,7 @@ define _make_bundle_rule
 
   $(2) : $(3)
 	@echo [MAKE BUNDLE] $(2)
-	$(CMDPREFIX)rm -rf $(2)
+	$(CMDPREFIX)$(RM) -rf $(2)
 	$(CMDPREFIX)mkdir -p $(2)/Contents/MacOS
 	$(CMDPREFIX)cp $(3) $(2)/Contents/MacOS
 	$(CMDPREFIX)$(BUILDDIR)/build-infoplist.py \
@@ -947,7 +1007,7 @@ define _make_apk_rule
 
   $(1) : $($(1)_deps) $($(1)_datarule)
 	@echo [MAKE APK] $(2)
-	echo $(CMDPREFIX)rm -rf $(2)
+	echo $(CMDPREFIX)$(RM) -rf $(2)
 	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
 	$($(1)_prebuild)
 	$(CMDPREFIX)$(MAKE_APK_PROJ)                                             \
@@ -992,7 +1052,7 @@ define _make_apk_rule
 
   .PHONY : $(1)_clean
   $(1)_clean :
-	rm -rf $(2)
+	$(RM) -rf $(2)
 endef
 
 
@@ -1023,6 +1083,7 @@ PROJECT_MODULES ?= $(APPS) $(DLLS)
 define _make_moduledef_rule
 
   $(1)_moduledef := $(MODULEDEF_DIR)/$(1).$(TARGET).$(CONFIG).def
+  .PHONY : $$($(1)_moduledef)
   $(MODULEDEF_DIR)/$(1).$(TARGET).$(CONFIG).def :
 	@mkdir -p $(MODULEDEF_DIR)
 	@echo [MODULEDEF] \($(1)\) $$@
@@ -1051,12 +1112,13 @@ define _make_moduledef_rule
 	else \
 	  echo "'$($(1)_cmds)' ]," >> $$@ ; \
 	fi
-	@echo "  'outputs': [ 'obj' ]," >> $$@
-
+	@echo "  'outputs': [ '$($(1)_appfile)' ]," >> $$@
 	@echo "  'inputs': [" >> $$@
-	@for s in $($(1)_src) ; do echo "  '$(MODULEDEF_SRCPREFIX)$$$$s'," ; \
+	for s in `$(RELPATH) $($(1)_src)` ;                       \
+      do echo "  '$(MODULEDEF_SRCPREFIX)$$$$s'," ; \
       done >> $$@
-	@for s in $($(1)_headerfiles) ; do echo "  '$(MODULEDEF_SRCPREFIX)$$$$s'," ;\
+	@for s in `$(RELPATH) $($(1)_headerfiles)` ;               \
+      do echo "  '$(MODULEDEF_SRCPREFIX)$$$$s'," ;   \
       done >> $$@
 	@echo "  ]," >> $$@
 
@@ -1124,6 +1186,13 @@ ALLDEPFILES := $(foreach t,$(C_MODULES),$($(t)_DEPFILES))
 
 ############################################################
 
+############################################################
+
+# TIDY
+
+.PHONY : tidy
+tidy : $(foreach m,$(C_MODULES),$(m)_tidy)
+
 # CLEAN
 
 # <mod>_cleanfiles
@@ -1132,12 +1201,27 @@ $(foreach mod,$(C_MODULES),$(eval \
     $($(mod)_dllfile) $($(mod)_appfile) $($(mod)_DEPFILES) \
 ))
 
-# <mod>_clean  rule to delete files
+# 1 - module
+# 2 - files
+# 3 - rule_name
+define _make_clean_split
 
+  $(3)_file := $(wordlist 1, 10, $(2))
+  $(3) :
+	$(RM) -rf $$($(3)_file)
+  .PHONY : $(3)
+  $(1)_clean : $(3)
+
+  $(if $(word 11,$(2)),$(eval \
+    $(call _make_clean_split,$(1),$(wordlist 11,$(words $(2)),$(2)),$(3)_a) \
+  ))
+
+endef
+
+# <mod>_clean  rule to delete files
 # 1 - mod
 define _make_clean_rule
-  $(1)_clean :
-	rm -rf $($(1)_cleanfiles)
+  $(eval $(call _make_clean_split,$(1),$($(1)_cleanfiles),$(1)_clean_split))
 endef
 
 $(foreach mod,$(C_MODULES),$(eval \
@@ -1150,8 +1234,8 @@ clean : $(foreach mod,$(C_MODULES) $(APKS),$(mod)_clean)
 
 .PHONY : depclean
 depclean :
-	rm -rf dep
+	$(RM) -rf $(DEPDIR)
 
 .PHONY : distclean
 distclean :
-	rm -rf dep obj bin lib
+	$(RM) -rf dep obj lib bin
