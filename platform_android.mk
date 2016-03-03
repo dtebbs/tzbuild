@@ -302,7 +302,7 @@ CFLAGSPOST += -c
 CXXFLAGSPRE := $(CFLAGSPRE) -std=c++11 -Wno-reorder -fno-rtti
 CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions $(addprefix -I,$(NDK_STL_INCLUDES))
 
-CFLAGSPOST += -x c -std=c99
+CFLAGSPOST += -x c -std=gnu11
 
 PCHFLAGS := -x c++-header
 
@@ -324,7 +324,7 @@ libsuffix := .a
 #
 
 OBJDUMP = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)objdump
-OBJDUMP_DISASS := -S
+OBJDUMP_DISASS := -S -l
 
 #
 # OTHER TOOLS
