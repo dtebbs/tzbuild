@@ -1053,6 +1053,8 @@ define _make_apk_rule
   .PHONY : $(1)_clean
   $(1)_clean :
 	$(RM) -rf $(2)
+
+  clean : $(1)_clean
 endef
 
 
@@ -1230,7 +1232,7 @@ $(foreach mod,$(C_MODULES),$(eval \
 
 # clean rule
 .PHONY : clean
-clean : $(foreach mod,$(C_MODULES) $(APKS),$(mod)_clean)
+clean : $(foreach mod,$(C_MODULES),$(mod)_clean)
 
 .PHONY : depclean
 depclean :
