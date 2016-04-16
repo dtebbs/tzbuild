@@ -332,6 +332,13 @@ EXPANSION_PERMISSIONS = \
     ";android.permission.ACCESS_NETWORK_STATE" + \
     ";android.permission.ACCESS_WIFI_STATE" + \
     ";android.permission.WRITE_EXTERNAL_STORAGE"
+    
+MANIFEST_1_GEARVR = ""
+GEARVR_PERMISSIONS = \
+    ";android.permission.INTERNET" + \
+    ";android.permission.WAKE_LOCK" + \
+    ";android.permission.ACCESS_NETWORK_STATE" + \
+    ";android.permission.READ_EXTERNAL_STORAGE"
 
 #
 #
@@ -438,6 +445,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
         'greystripe' : [ MANIFEST_1_GREYSTRIPE, GREYSTRIPE_PERMISSIONS, False ],
         'mdotm'      : [ MANIFEST_1_MDOTM, MDOTM_PERMISSIONS, False ],
         'expansion'  : [ MANIFEST_1_EXPANSION, EXPANSION_PERMISSIONS, False ],
+        'gearvr'     : [ MANIFEST_1_GEARVR, GEARVR_PERMISSIONS, True ],
         }
 
     # icon
@@ -467,7 +475,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
       android:versionName="%VERSION_DOT_4%">
     <application android:label="API">
     </application>
-    <uses-sdk android:minSdkVersion="%ANDROID_SDK_VERSION%" />
+    <uses-sdk android:minSdkVersion="%ANDROID_MIN_SDK_VERSION%" android:targetSdkVersion="%ANDROID_TARGET_SDK_VERSION%" />
 </manifest>"""
 
         data += replace_tags(MANIFEST_LIBRARY_0, table)
@@ -513,12 +521,21 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     # Write manifest
 
     MANIFEST_0 = """<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="%PACKAGE_NAME%"
-      android:versionCode="%VERSION_INT%"
-      android:versionName="%VERSION_DOT_4%"
-      android:installLocation="auto">
-    <application android:label="@string/app_name" %ICON_ATTR%"""
+        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+            package="%PACKAGE_NAME%"
+            android:versionCode="%VERSION_INT%"
+            android:versionName="%VERSION_DOT_4%" """
+      
+    if options['gearvr']:
+        MANIFEST_0 += """
+            android:installLocation="internalOnly" """
+    else:
+        MANIFEST_0 += """
+            android:installLocation="auto" """
+            
+    MANIFEST_0 += """>"""
+    MANIFEST_0 += """
+        <application android:label="@string/app_name" %ICON_ATTR%"""
 
     if target_num >= 21:
         MANIFEST_0 += """
@@ -551,14 +568,33 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
                   android:label="%APP_TITLE%"
                   android:launchMode="singleTask"
                   android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|touchscreen|smallestScreenSize" """
+                  
+    if options['gearvr']:
+        MANIFEST_0 += """
+                  android:excludeFromRecents="true"
+                  android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" """
+                  
     if options['landscape']:
         MANIFEST_0 += """
                   android:screenOrientation=""" +'"'+options['landscape']+'"'
 
-    MANIFEST_0 += """
-                  >
+    MANIFEST_0 += """>
             <meta-data android:name="isGame" android:value="true" />"""
-    if not override_main_activity:
+    
+    if options['gearvr']:        
+        MANIFEST_0 += """
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>"""
+            
+            # should use this in the non-dev build
+            #<intent-filter>
+            #    <action android:name="android.intent.action.MAIN" />
+            #    <category android:name="android.intent.category.INFO" />
+            #</intent-filter>"""
+    else:
+    #if not override_main_activity:
         MANIFEST_0 += """
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -599,8 +635,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
         if activity_icon:
             MANIFEST_0 += ("android:icon=\"@drawable/%s\"" % activity_icon)
 
-        MANIFEST_0 += """
-                  >
+        MANIFEST_0 += """>
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -643,9 +678,10 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
 		      android:smallScreens="false"
 		      android:anyDensity="true" />
     <uses-feature android:name="android.hardware.screen.landscape" />
+    <uses-feature android:glEsVersion="%GLES_VERSION%" />
     <!-- SCREEN END -->
 
-    <uses-sdk android:minSdkVersion="%ANDROID_SDK_VERSION%" />"""
+    <uses-sdk android:minSdkVersion="%ANDROID_MIN_SDK_VERSION%" android:targetSdkVersion="%ANDROID_TARGET_SDK_VERSION%" />"""
 
     if options['gamepad']:
         MANIFEST_2 += """
@@ -671,11 +707,6 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
 
     for p in permissions:
         data += MANIFEST_3_PERMISSION_PRE + p + MANIFEST_3_PERMISSION_POST
-
-    # OpenGL ES 2.0
-
-    data += """
-    <uses-feature android:glEsVersion="0x00020000" />"""
 
     # Footer
 
@@ -905,6 +936,7 @@ def usage():
                         - (optional) add a basic decl for a launchable activity
                           using the given icon.
     --sdk-version       - minSdkVersion
+    --target-sdk-version- targetSdkVersion
     --debug             - (optional) set the debuggable flag in the application
     --permissions "<perm1>;<perm2>;.."
                         - (optional) e.g. "com.android.vending.CHECK_LICENSE;
@@ -967,6 +999,7 @@ def usage():
     --facebook          - (optional) include facebook entries
     --zirconia          - (optional) include Zirconia permissions
     --mobiroo           - (optional) include mobiroo entries to manifest
+    --gearvr            - (optional) include GearVR entries to manifest
 
     (Ad networks)
     --admob             - (optional) include AdMob activity decl
@@ -1001,11 +1034,13 @@ def main():
     package = None
     application_name = None
     activity = None
-    sdk_version = "8"
+    min_sdk_version = "8"
+    target_sdk_version = None
     icon_dir = None
     icon_file = None
     keystore = None
     keyalias = None
+    glEsVersion = "0x00020000"
     src = []
     extras = []
     permissions = \
@@ -1075,6 +1110,8 @@ def main():
 
     def add_activity_code(ac):
         options['activity_extra_code'] += ac
+        
+    print sys.argv[1:]
 
     while len(args):
         arg = args.pop(0)
@@ -1105,7 +1142,9 @@ def main():
         elif "--launcher-activity" == arg:
             add_launcher_activity(args.pop(0))
         elif "--sdk-version" == arg:
-            sdk_version = args.pop(0)
+            min_sdk_version = args.pop(0)
+        elif "--target-sdk-version" == arg:
+            target_sdk_version = args.pop(0)
         elif "--debug" == arg:
             options['debug'] = True
         elif "--permissions" == arg:
@@ -1222,6 +1261,10 @@ def main():
             extras.append('flurry')
         elif "--nativecrashhandler" == arg:
             extras.append('nativecrashhandler')
+        elif "--gearvr" == arg:
+            extras.append('gearvr')
+            options['gearvr'] = True
+            glEsVersion = "0x00030000"
         else:
             print "Error: unknown parameter: '%s'" % arg
             print ""
@@ -1258,6 +1301,9 @@ def main():
         version_int_list[1] * 10000 + \
         version_int_list[0] * 1000000
     version_dot_4 = ".".join([ str(i) for i in version_int_list])
+    
+    if target_sdk_version is None:
+        target_sdk_version = min_sdk_version
 
     # Template table
 
@@ -1268,8 +1314,10 @@ def main():
         '%APPLICATION_NAME%' : application_name,
         '%ACTIVITY_NAME%' : activity,
         '%APP_TITLE%' : title,
-        '%ANDROID_SDK_VERSION%' : sdk_version,
-        '%ICON_DIR%' : icon_dir or icon_file
+        '%ANDROID_MIN_SDK_VERSION%' : min_sdk_version,
+        '%ANDROID_TARGET_SDK_VERSION%' : target_sdk_version,
+        '%ICON_DIR%' : icon_dir or icon_file,
+        '%GLES_VERSION%' : glEsVersion,
         }
 
     verbose("TABLE: ")
