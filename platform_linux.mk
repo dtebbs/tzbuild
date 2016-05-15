@@ -62,7 +62,7 @@ CFLAGSPRE := \
     -ftree-vectorize -msse3 -mssse3
 
 ifeq (clang,$(COMPILER))
-  CFLAGSPRE += -Qunused-arguments -Wno-deprecated-register
+  CFLAGSPRE += -Qunused-arguments -Wno-deprecated-register --stdlib=libc++
 endif
 
 CFLAGSPOST := -c
@@ -72,7 +72,7 @@ CFLAGSPOST := -c
 ifeq (1,$(C_SYMBOLS))
   CFLAGSPRE += -g
   DLLFLAGSPOST += -g -rdynamic
-  LDFLAGSPOST += -g -rdynamic
+  LDFLAGSPOST += -g -rdynamic -lc++
 endif
 
 ifeq (1,$(C_OPTIMIZE))
