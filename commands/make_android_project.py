@@ -332,7 +332,7 @@ EXPANSION_PERMISSIONS = \
     ";android.permission.ACCESS_NETWORK_STATE" + \
     ";android.permission.ACCESS_WIFI_STATE" + \
     ";android.permission.WRITE_EXTERNAL_STORAGE"
-    
+
 MANIFEST_1_GEARVR = ""
 GEARVR_PERMISSIONS = \
     ";android.permission.INTERNET" + \
@@ -525,14 +525,14 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
             package="%PACKAGE_NAME%"
             android:versionCode="%VERSION_INT%"
             android:versionName="%VERSION_DOT_4%" """
-      
+
     if options['gearvr']:
         MANIFEST_0 += """
             android:installLocation="internalOnly" """
     else:
         MANIFEST_0 += """
             android:installLocation="auto" """
-            
+
     MANIFEST_0 += """>"""
     MANIFEST_0 += """
         <application android:label="@string/app_name" %ICON_ATTR%"""
@@ -568,26 +568,26 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
                   android:label="%APP_TITLE%"
                   android:launchMode="singleTask"
                   android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|touchscreen|smallestScreenSize" """
-                  
+
     if options['gearvr']:
         MANIFEST_0 += """
                   android:excludeFromRecents="true"
                   android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen" """
-                  
+
     if options['landscape']:
         MANIFEST_0 += """
                   android:screenOrientation=""" +'"'+options['landscape']+'"'
 
     MANIFEST_0 += """>
             <meta-data android:name="isGame" android:value="true" />"""
-    
-    if options['gearvr']:        
+
+    if options['gearvr']:
         MANIFEST_0 += """
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>"""
-            
+
             # should use this in the non-dev build
             #<intent-filter>
             #    <action android:name="android.intent.action.MAIN" />
@@ -1074,6 +1074,7 @@ def main():
         'debug': False,
         'gamepad': False,
         'banner': None,
+        'gearvr': None,
         }
 
     def add_meta(kv, meta_map = meta):
@@ -1110,7 +1111,7 @@ def main():
 
     def add_activity_code(ac):
         options['activity_extra_code'] += ac
-        
+
     print sys.argv[1:]
 
     while len(args):
@@ -1301,7 +1302,7 @@ def main():
         version_int_list[1] * 10000 + \
         version_int_list[0] * 1000000
     version_dot_4 = ".".join([ str(i) for i in version_int_list])
-    
+
     if target_sdk_version is None:
         target_sdk_version = min_sdk_version
 
