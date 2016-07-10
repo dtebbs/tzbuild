@@ -582,17 +582,18 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
             <meta-data android:name="isGame" android:value="true" />"""
 
     if options['gearvr']:
-        MANIFEST_0 += """
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>"""
-
-            # should use this in the non-dev build
-            #<intent-filter>
-            #    <action android:name="android.intent.action.MAIN" />
-            #    <category android:name="android.intent.category.INFO" />
-            #</intent-filter>"""
+        if options['debug']:
+            MANIFEST_0 += """
+                <intent-filter>
+                    <action android:name="android.intent.action.MAIN" />
+                    <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>"""
+        else:
+            MANIFEST_0 += """
+                <intent-filter>
+                    <action android:name="android.intent.action.MAIN" />
+                    <category android:name="android.intent.category.INFO" />
+                </intent-filter>"""        
     else:
     #if not override_main_activity:
         MANIFEST_0 += """
