@@ -276,7 +276,7 @@ ifeq ($(CONFIG),release)
 endif
 
 ifeq ($(C_OPTIMIZE),1)
-  CFLAGSPOST += -O3 -ffast-math -ftree-vectorize
+  CFLAGSPOST += -g -O3 -ffast-math -ftree-vectorize
   # CFLAGSPOST += -fomit-frame-pointer
 
   # WORKAROUND: gcc 4.8 targeting x86

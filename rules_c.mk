@@ -105,7 +105,6 @@ $(foreach mod,$(C_MODULES),$(eval \
   $(call _calc_fulldeps,$(mod)) \
 ))
 
-
 $(foreach mod,$(C_MODULES),$(call log,$(mod)_fulldeps = $($(mod)_fulldeps)))
 
 ############################################################
