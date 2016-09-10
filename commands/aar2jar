@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+function usage () {
+    echo ""
+    echo "Usage: aar2jar <input.aar> <output.jar>"
+    echo ""
+}
+
+if [ "" == "$1" ] || [ "" == "$2" ] || ! [ "" == "$3" ] ; then
+    usage
+    exit 1
+fi
+
+if ! [ -e "$1" ] ; then
+    echo "Error: input file '$1' does not exist"
+    usage
+    exit 1
+fi
+
+# echo $1 \-\> $2
+unzip -p $1 classes.jar > $2
