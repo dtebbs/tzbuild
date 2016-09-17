@@ -290,13 +290,14 @@ ifeq ($(C_OPTIMIZE),1)
 else
   CFLAGSPOST += -O0
 endif
+
 ifeq ($(C_SYMBOLS),1)
-  CFLAGSPOST += -g
-else
+  CFLAGSPOST += -g -funwind-tables
 endif
-  dll-post = \
-    $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)strip --strip-unneeded \
-    $($(1)_dllfile)
+
+dll-post = \
+  $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)strip --strip-unneeded \
+  $($(1)_dllfile)
 CFLAGSPOST += -c
 
 CXXFLAGSPRE := $(CFLAGSPRE) -std=c++11 -Wno-reorder -fno-rtti
