@@ -5,7 +5,6 @@ XCODE_ROOT := /Applications/Xcode.app/Contents/Developer
 XCODE_TOOLROOT := $(XCODE_ROOT)/Toolchains/XcodeDefault.xctoolchain
 XCODE_PLATFORMS := $(XCODE_ROOT)/Platforms
 
-
 ifneq (,$(filter i386 x86_64,$(ARCH)))
   XCODE_PLATFORM := $(XCODE_PLATFORMS)/iPhoneSimulator.platform
   CXXFLAGSPRE := -mios-simulator-version-min=5.0 \
@@ -22,8 +21,12 @@ endif
 XCODE_SDK := $(shell ls $(XCODE_PLATFORM)/Developer/SDKs | tail -n 1)
 XCODE_SDKROOT := $(XCODE_PLATFORM)/Developer/SDKs/$(XCODE_SDK)
 
+CC := $(XCODE_TOOLROOT)/usr/bin/clang
 CXX := $(XCODE_TOOLROOT)/usr/bin/clang
 CMM := $(XCODE_TOOLROOT)/usr/bin/clang
+
+CSYSTEMFLAGS := \
+  -isysroot $(XCODE_SDKROOT) \
 
 CXXFLAGSPRE += -x objective-c++ \
   -arch $(ARCH) \
@@ -31,7 +34,6 @@ CXXFLAGSPRE += -x objective-c++ \
   -fmessage-length=0 -fpascal-strings -fexceptions -fasm-blocks \
   -fvisibility=hidden -fvisibility-inlines-hidden \
   -Wall \
-  -isysroot $(XCODE_SDKROOT) \
   -DTZ_IOS=1
 
 CXXFLAGSPOST := \
