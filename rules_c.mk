@@ -984,7 +984,7 @@ define _make_apk_native_rule
 	+$(MAKE) ARCH=$(3) $($(1)_native)                   \
       BINDIR=$(2)/libs/$(call _android_arch_name,$(3))
 
-  $(1) : _$(1)_make_$(3)_native_libs
+  $(1) $(1)_install : _$(1)_make_$(3)_native_libs
 
 endef
 
@@ -995,6 +995,12 @@ define _make_apk_rule
 
   .PHONY : $(1)
 
+  $(1) :
+	./gradlew :$(1):assembleDebug
+
+  $(1)_install : $(1)
+	./gradlew :$(1):installDebug
+
   # In turn, we generate a project, copy in any native libs, copy in
   # any .jar files, and finally perform an ant build.  Note we do:
   #
@@ -1004,41 +1010,41 @@ define _make_apk_rule
   # 4.2.24(1)) are broken and don't deal with missing destination
   # files as part of -nt.
 
-  $(1) : $($(1)_deps) $($(1)_datarule)
-	@echo [MAKE APK] $(2)
-	echo $(CMDPREFIX)$(RM) -rf $(2)
-	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
-	$($(1)_prebuild)
-	$(CMDPREFIX)$(MAKE_APK_PROJ)                                             \
-      --sdk-version                                                          \
-        $(if $($(1)_sdk_version),$($(1)_sdk_version),$(ANDROID_SDK_VERSION)) \
-      --target $(if $($(1)_target),$($(1)_target),$(ANDROID_SDK_TARGET))     \
-      --dest $(2)                                                            \
-      --version $($(1)_version)                                              \
-      --name $(1)                                                            \
-      --package $($(1)_package)                                              \
-      $(if $($(1)_srcbase),$(addprefix --src ,$($(1)_srcbase)))              \
-      $(if $(ANDROID_KEY_STORE),--key-store $(ANDROID_KEY_STORE))            \
-      $(if $(ANDROID_KEY_ALIAS),--key-alias $(ANDROID_KEY_ALIAS))            \
-      $(if $(ANDROID_SDK),--android-sdk $(ANDROID_SDK))                      \
-      $(if $($(1)_library),--library)                                        \
-      $(if $($(1)_title),--title "$($(1)_title)")                            \
-      $(if $($(1)_activity),--activity $($(1)_activity))                     \
-      $(addprefix --permissions ,$($(1)_permissions))                        \
-      $(if $($(1)_icondir),--icon-dir $($(1)_icondir))                       \
-      $($(1)_apk_depflags)                                                   \
-      $($(1)_flags)
-	$(CMDPREFIX)for j in $($(1)_jarfiles) ; do                  \
-      dst=$(2)/libs/`basename $$$$j` ;                          \
-      if [ ! -f $$$$dst ] || [ $$$$j -nt $$$$dst ] ; then       \
-        echo [CP JAR] $$$$j ; cp -a $$$$j $$$$dst ;             \
-      fi ;                                                      \
-    done
-	$(CMDPREFIX)cd $(2) && ant $(APK_CONFIG)
-	$($(1)_poststep)
+  # $(1) : $($(1)_deps) $($(1)_datarule)
+  # 	@echo [MAKE APK] $(2)
+  # 	echo $(CMDPREFIX)$(RM) -rf $(2)
+  # 	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
+  # 	$($(1)_prebuild)
+  # 	$(CMDPREFIX)$(MAKE_APK_PROJ)                                             \
+  #     --sdk-version                                                          \
+  #       $(if $($(1)_sdk_version),$($(1)_sdk_version),$(ANDROID_SDK_VERSION)) \
+  #     --target $(if $($(1)_target),$($(1)_target),$(ANDROID_SDK_TARGET))     \
+  #     --dest $(2)                                                            \
+  #     --version $($(1)_version)                                              \
+  #     --name $(1)                                                            \
+  #     --package $($(1)_package)                                              \
+  #     $(if $($(1)_srcbase),$(addprefix --src ,$($(1)_srcbase)))              \
+  #     $(if $(ANDROID_KEY_STORE),--key-store $(ANDROID_KEY_STORE))            \
+  #     $(if $(ANDROID_KEY_ALIAS),--key-alias $(ANDROID_KEY_ALIAS))            \
+  #     $(if $(ANDROID_SDK),--android-sdk $(ANDROID_SDK))                      \
+  #     $(if $($(1)_library),--library)                                        \
+  #     $(if $($(1)_title),--title "$($(1)_title)")                            \
+  #     $(if $($(1)_activity),--activity $($(1)_activity))                     \
+  #     $(addprefix --permissions ,$($(1)_permissions))                        \
+  #     $(if $($(1)_icondir),--icon-dir $($(1)_icondir))                       \
+  #     $($(1)_apk_depflags)                                                   \
+  #     $($(1)_flags)
+  # 	$(CMDPREFIX)for j in $($(1)_jarfiles) ; do                  \
+  #     dst=$(2)/libs/`basename $$$$j` ;                          \
+  #     if [ ! -f $$$$dst ] || [ $$$$j -nt $$$$dst ] ; then       \
+  #       echo [CP JAR] $$$$j ; cp -a $$$$j $$$$dst ;             \
+  #     fi ;                                                      \
+  #   done
+  # 	$(CMDPREFIX)cd $(2) && ant $(APK_CONFIG)
+  # 	$($(1)_poststep)
 
-  $(1)_install : $(1)
-	adb install -r $($(1)_apk_file)
+  # $(1)_install : $(1)
+  # 	adb install -r $($(1)_apk_file)
 
   $(1)_run_dot:=$(if $(filter com.%,$($(1)_activity)),,.)
   $(1)_run : $(1)_install
