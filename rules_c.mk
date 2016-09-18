@@ -995,10 +995,33 @@ define _make_apk_rule
 
   .PHONY : $(1)
 
-  $(1) :
+  $(2)/AndroidManifest.xml :
+	@echo [MAKE APK] $(2)
+	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
+	$(CMDPREFIX)$(MAKE_APK_PROJ)                                             \
+      --sdk-version                                                          \
+      $(if $($(1)_sdk_version),$($(1)_sdk_version),$(ANDROID_SDK_VERSION))   \
+      --target $(if $($(1)_target),$($(1)_target),$(ANDROID_SDK_TARGET))     \
+      --dest $(2)                                                            \
+      --version $($(1)_version)                                              \
+      --name $(1)                                                            \
+      --package $($(1)_package)                                              \
+      $(if $($(1)_srcbase),$(addprefix --src ,$($(1)_srcbase)))              \
+      $(if $(ANDROID_KEY_STORE),--key-store $(ANDROID_KEY_STORE))            \
+      $(if $(ANDROID_KEY_ALIAS),--key-alias $(ANDROID_KEY_ALIAS))            \
+      $(if $(ANDROID_SDK),--android-sdk $(ANDROID_SDK))                      \
+      $(if $($(1)_library),--library)                                        \
+      $(if $($(1)_title),--title "$($(1)_title)")                            \
+      $(if $($(1)_activity),--activity $($(1)_activity))                     \
+      $(addprefix --permissions ,$($(1)_permissions))                        \
+      $(if $($(1)_icondir),--icon-dir $($(1)_icondir))                       \
+      $($(1)_apk_depflags)                                                   \
+      $($(1)_flags)
+
+  $(1) : $(1) $(2)/AndroidManifest.xml
 	./gradlew :$(1):assembleDebug
 
-  $(1)_install : $(1)
+  $(1)_install : $(2)/AndroidManifest.xml
 	./gradlew :$(1):installDebug
 
   # In turn, we generate a project, copy in any native libs, copy in
