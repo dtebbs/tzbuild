@@ -226,7 +226,6 @@ $(foreach b,$(DLLS) $(APPS),\
     $(foreach e,$($(b)_extlibs) $($(b)_depextlibs),$($(e)_dlls)) \
   ) \
 )
-$(call log,npturbulenz_ext_dlls = $(npturbulenz_ext_dlls))
 
 ############################################################
 
@@ -993,7 +992,7 @@ endef
 # 2 - apk location
 define _make_apk_rule
 
-  .PHONY : $(1)
+  .PHONY : $(1) $(2)/AndroidManifest.xml
 
   $(2)/AndroidManifest.xml :
 	@echo [MAKE APK] $(2)
@@ -1019,10 +1018,10 @@ define _make_apk_rule
       $($(1)_flags)
 
   $(1) : $(1) $(2)/AndroidManifest.xml
-	./gradlew :$(1):assembleDebug
+	APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
 
   $(1)_install : $(2)/AndroidManifest.xml
-	./gradlew :$(1):installDebug
+	APKPATH=$(2) ./gradlew :$(1):install$(CONFIG)
 
   # In turn, we generate a project, copy in any native libs, copy in
   # any .jar files, and finally perform an ant build.  Note we do:
@@ -1184,9 +1183,6 @@ _project_all_modules := $(sort \
   $(foreach m,$(PROJECT_MODULES),$(m) $($(m)_fulldeps)) \
 )
 _project_moduledefs := $(foreach m,$(_project_all_modules),$($(m)_moduledef))
-
-# $(info _project_moduledefs: $(_project_moduledefs))
-# $(info $(PROJECT_GYP_FILE))
 
 $(PROJECT_GYP_FILE) : $(_project_moduledefs)
 	@echo "[MKGYP ]" $@
