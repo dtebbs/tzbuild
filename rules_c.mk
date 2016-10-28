@@ -997,6 +997,7 @@ define _make_apk_rule
   $(2)/AndroidManifest.xml :
 	@echo [MAKE APK] $(2)
 	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
+	$($(1)_prebuild)
 	$(CMDPREFIX)$(MAKE_APK_PROJ)                                             \
       --sdk-version                                                          \
       $(if $($(1)_sdk_version),$($(1)_sdk_version),$(ANDROID_SDK_VERSION))   \
