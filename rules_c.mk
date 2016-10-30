@@ -992,12 +992,11 @@ endef
 # 2 - apk location
 define _make_apk_rule
 
-  .PHONY : $(1) $(2)/AndroidManifest.xml
+  .PHONY : $(1) $(1)_do_prebuild $(2)/AndroidManifest.xml
 
   $(2)/AndroidManifest.xml :
 	@echo [MAKE APK] $(2)
 	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
-	$($(1)_prebuild)
 	$(CMDPREFIX)$(MAKE_APK_PROJ)                                             \
       --sdk-version                                                          \
       $(if $($(1)_sdk_version),$($(1)_sdk_version),$(ANDROID_SDK_VERSION))   \
@@ -1018,10 +1017,13 @@ define _make_apk_rule
       $($(1)_apk_depflags)                                                   \
       $($(1)_flags)
 
-  $(1) : $(1) $(2)/AndroidManifest.xml
+  $(1)_do_prebuild :
+	$($(1)_prebuild)
+
+  $(1) : $(1)_do_prebuild $(2)/AndroidManifest.xml
 	APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
 
-  $(1)_install : $(2)/AndroidManifest.xml
+  $(1)_install : $(1)_do_prebuild $(2)/AndroidManifest.xml
 	APKPATH=$(2) ./gradlew :$(1):install$(CONFIG)
 
   # In turn, we generate a project, copy in any native libs, copy in
