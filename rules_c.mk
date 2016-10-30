@@ -933,44 +933,24 @@ endif
 
 # APKS (android only)
 
-APK_CONFIG := $(if $(ANDROID_KEY_STORE),$(CONFIG),debug)
-
 # For each apk, calc the destination and full set of native libs to
 # copy
-$(foreach apk,$(APKS),														\
-  $(eval $(apk)_apk_dest := $(BINOUTDIR)/$(apk))							\
-  $(eval																	\
-     $(apk)_version := $(if $($(apk)_version),$($(apk)_version),1.0.0)		\
-  )																			\
-  $(eval $(apk)_apk_file := $(strip                                         \
-    $($(apk)_apk_dest)/bin/$(apk)-$(strip $($(apk)_version))-$(APK_CONFIG).apk \
-  ))																		\
-  $(eval																	\
-    $(apk)_archs := $(if $($(apk)_archs),$($(apk)_archs),$(ARCH))			\
-  )																			\
+$(foreach apk,$(APKS),                                                      \
+  $(foreach p,version title package activity,                               \
+    $(if $($(apk)_$(p)),,$(error $(apk)_$(p) not set))                      \
+  )                                                                         \
+  $(eval $(apk)_apk_dest := $(BINOUTDIR)/$(apk))                            \
+  $(eval $(apk)_apk_deploy_name :=                                          \
+    $(apk)-$($(apk)_version)$(strip $($(apk)_deploytag))$(TAG).apk          \
+  )                                                                         \
+  $(eval $(apk)_apk_file := $($(apk)_apk_dest)/$(apk)-$(CONFIG).apk)        \
+  $(eval                                                                    \
+    $(apk)_archs := $(if $($(apk)_archs),$($(apk)_archs),$(ARCH))           \
+  )                                                                         \
 )
 $(call log,android_engine_dest = $(android_engine_dest))
 $(call log,android_engine_copylibs = $(android_engine_copylibs))
 $(call log,android_engine_file = $(android_engine_file))
-
-# For each APK, <apk>_apk_fulldeps := \
-#     [ <d>_apk_fulldeps for d in <apk>_deps ]
-
-$(foreach apk,$(APKS),                                          \
-  $(eval $(apk)_apk_fulldeps :=                                 \
-    $(foreach d,$($(apk)_deps),$($(d)_apk_dest) $($(d)_apk_fulldeps)) \
-  )                                                             \
-)
-
-# $(warning android_online_deps = $(android_online_deps))
-# $(warning android_online_apk_fulldeps = $(android_online_apk_fulldeps))
-
-$(foreach apk,$(APKS),                                          \
-  $(eval $(apk)_apk_depflags :=                                 \
-    $(foreach dp,$($(apk)_apk_fulldeps),--depends $(dp))        \
-  )                                                             \
-)
-# $(warning android_online_apk_depflags = $(android_online_apk_depflags))
 
 # Rule to make native apps for APK
 # 1 - apk name
@@ -992,8 +972,7 @@ endef
 # 2 - apk location
 define _make_apk_rule
 
-  .PHONY : $(1) $(1)_do_prebuild $(2)/AndroidManifest.xml
-
+  .PHONY : $(2)/AndroidManifest.xml
   $(2)/AndroidManifest.xml :
 	@echo [MAKE APK] $(2)
 	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
@@ -1017,31 +996,49 @@ define _make_apk_rule
       $($(1)_apk_depflags)                                                   \
       $($(1)_flags)
 
+  .PHONY : $(1)_do_prebuild
   $(1)_do_prebuild :
 	$($(1)_prebuild)
 
+  .PHONY : $(1)
   $(1) : $(1)_do_prebuild $(2)/AndroidManifest.xml
 	APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
 
+  .PHONY : $(1)_install
   $(1)_install : $(1)_do_prebuild $(2)/AndroidManifest.xml
 	APKPATH=$(2) ./gradlew :$(1):install$(CONFIG)
 
+  .PHONY : $(1)_run
   $(1)_run_dot:=$(if $(filter com.%,$($(1)_activity)),,.)
   $(1)_run : $(1)_install
 	adb shell am start -a android.intent.action.MAIN \
       -n $($(1)_package)/$$($(1)_run_dot)$($(1)_activity)
 
-  $(1)_deploy : #$(1)
-	APK="$($(1)_apk_file)" MARKET="$(MARKET)" \
-      $(BUILDDIR)/commands/deploy_apk.sh
+  .PHONY : $(1)_deploy
+  $(1)_deploy : # $(1)
+	@[ "" != "$(APKDEPLOYPATH)" ] || \
+      (echo "ERROR: env var APKDEPLOYPATH not set" ; exit 1)
+	@[ "" != "$(TAG)" ] || \
+      (echo "ERROR: TAG not set, use TAG=-rc1 or similar" ; exit 1)
+	@[ -e "$(APKDEPLOYPATH)" ] || \
+      (echo "ERROR: APKDEPLOYPATH \($(APKDEPLOYPATH)\) does not exist"; exit 1)
+	echo Deploy destination: $(APKDEPLOYPATH)/$($(1)_apk_deploy_name)
+	@(! [ -e "$(APKDEPLOYPATH)/$($(1)_apk_deploy_name)" ]) || \
+      (echo "ERROR: Deploy destination $(APKDEPLOYPATH)/$($(1)_apk_deploy_name) already exists" ; exit 1)
+	@[ -e "$($(1)_apk_file)" ] || \
+      (echo "ERROR: APK file $($(1)_apk_file) not found" ; \
+       exit 1)
+	cp "$($(1)_apk_file)" "$(APKDEPLOYPATH)/$($(1)_apk_deploy_name)"
 
-  .PHONY : $(1)_clean $(1)_java_clean
-  $(1)_clean :
-	$(RM) -rf $(2)
-  $(1)_java_clean :
+  .PHONY : $(1)_java_clean
+  $(1)_java_clean : $(2)/AndroidManifest.xml
 	APKPATH=$(2) ./gradlew clean
 
-  clean : $(1)_clean $(1)_java_clean
+  .PHONY : $(1)_clean
+  $(1)_clean :
+	$(RM) -rf $(2)
+
+  clean : $(1)_clean
 endef
 
 
