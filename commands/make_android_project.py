@@ -470,9 +470,10 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     if library:
         MANIFEST_LIBRARY_0 = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="%PACKAGE_NAME%"
-      android:versionCode="%VERSION_INT%"
-      android:versionName="%VERSION_DOT_4%">
+          xmlns:tools="http://schemas.android.com/tools"
+          package="%PACKAGE_NAME%"
+          android:versionCode="%VERSION_INT%"
+          android:versionName="%VERSION_DOT_4%">
     <application android:label="API">
     </application>
     <uses-sdk android:minSdkVersion="%ANDROID_MIN_SDK_VERSION%" android:targetSdkVersion="%ANDROID_TARGET_SDK_VERSION%" />
@@ -521,10 +522,11 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     # Write manifest
 
     MANIFEST_0 = """<?xml version="1.0" encoding="utf-8"?>
-        <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-            package="%PACKAGE_NAME%"
-            android:versionCode="%VERSION_INT%"
-            android:versionName="%VERSION_DOT_4%" """
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          xmlns:tools="http://schemas.android.com/tools"
+          package="%PACKAGE_NAME%"
+          android:versionCode="%VERSION_INT%"
+          android:versionName="%VERSION_DOT_4%" """
 
     if options['gearvr']:
         MANIFEST_0 += """
@@ -535,7 +537,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
 
     MANIFEST_0 += """>"""
     MANIFEST_0 += """
-        <application android:label="@string/app_name" %ICON_ATTR%"""
+    <application android:label="@string/app_name" %ICON_ATTR%"""
 
     if target_num >= 21:
         MANIFEST_0 += """
@@ -676,8 +678,10 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     <!-- NOTE: Kindle Fire requires largeScreens=true -->
     <supports-screens android:largeScreens="true"
                       android:normalScreens="true"
-		      android:smallScreens="false"
-		      android:anyDensity="true" />
+                      android:smallScreens="false"
+                      android:anyDensity="true"
+                      tools:replace="android:smallScreens"
+                      />
     <uses-feature android:name="android.hardware.screen.landscape" />
     <uses-feature android:glEsVersion="%GLES_VERSION%" />
     <!-- SCREEN END -->
