@@ -7,7 +7,7 @@
 #
 ############################################################
 
-$(call log,LINUX BUILD CONFIGURATION)
+CLANG_VERSION ?= 3.6
 
 #
 # CCACHE
@@ -15,34 +15,80 @@ $(call log,LINUX BUILD CONFIGURATION)
 CCACHE:=$(shell test -n "`which ccache 2&>/dev/null`"; if [ $$? -eq 0 ] ; then echo "ccache" ; fi)
 
 #
+# DISTCC
+#
+ifeq (1,$(ENABLE_DISTCC))
+DISTCC:=$(shell test -n "`which distcc 2&>/dev/null`"; if [ $$? -eq 0 ] ; then echo "distcc" ; fi)
+endif
+
+#
+# RPATH the executable dir?
+ifneq (1,$(DISABLE_EXECUTABLE_RPATH))
+  _rpath_flags := -Wl,-rpath,'$$$$ORIGIN'
+endif
+
+#
+# CXX / CMM
+#
+
+ifeq (clang,$(COMPILER))
+  CXXCOMPILER:=$(shell \
+    which clang++ || which clang++-$(CLANG_VERSION) || echo -n \
+  )
+  ifeq ($(CXXCOMPILER),)
+    $(error Cannot find clang++)
+  endif
+else
+  CXXCOMPILER:=g++
+endif
+
+CXX := $(CCACHE) $(DISTCC) $(CXXCOMPILER)
+CC := $(CXX) -x c
+
+#
 # CXX / CMM FLAGS
 #
 
-CXX := $(CCACHE) g++
+_cxxflags_warnings := \
+    -Wall -Wconversion -Wsign-compare -Wno-unknown-pragmas \
+    -Wno-overloaded-virtual -Wno-trigraphs -Wno-unused-parameter
+
+# -Wconversion
+
+CFLAGSPRE := \
+    -fmessage-length=0 -pipe \
+    $(_cxxflags_warnings) \
+    -fPIC \
+    -ftree-vectorize -msse3 -mssse3
+
+ifeq (clang,$(COMPILER))
+  CFLAGSPRE += -Qunused-arguments -Wno-deprecated-register --stdlib=libc++
+endif
+
+CFLAGSPOST := -c
+
+# SYMBOLS
+
+ifeq (1,$(C_SYMBOLS))
+  CFLAGSPRE += -g
+  DLLFLAGSPOST += -g -rdynamic
+  LDFLAGSPOST += -g -rdynamic -lc++
+endif
+
+ifeq (1,$(C_OPTIMIZE))
+  CFLAGSPRE += -O3 -DNDEBUG -ftree-vectorize
+
+else
+  CFLAGSPRE += -O0 -D_DEBUG -DDEBUG
+  # ifneq (clang,$(COMPILER))
+  #   CFLAGSPRE += -falign-functions=4
+  # endif
+endif
 
 CXXFLAGSPRE := \
-    -std=c++11 \
-    -fmessage-length=0 -pipe \
-    -Wall \
-    -Wno-reorder -Wno-trigraphs -Wno-unknown-pragmas \
-    -fPIC \
-    -ftree-vectorize -msse3 -mssse3 \
-    -DXP_LINUX=1 -DXP_UNIX=1 \
-    -DMOZILLA_STRICT_API \
-    -fexceptions
-
-CXXFLAGSPOST := \
-    -c
-
-# DEBUG / RELEASE
-
-ifeq ($(CONFIG),debug)
-  CXXFLAGSPRE += -g -O0 -D_DEBUG -DDEBUG -falign-functions=4
-  CMMFLAGSPRE += -g -O0 -D_DEBUG -DDEBUG -falign-functions=4
-else
-  CXXFLAGSPRE += -g -O3 -DNDEBUG
-  CMMFLAGSPRE += -g -O0 -DNDEBUG
-endif
+  $(CFLAGSPRE) -Wno-overloaded-virtual -std=c++11 -Wno-reorder \
+  -DXP_LINUX=1 -DXP_UNIX=1 -DMOZILLA_STRICT_API
+CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions -fpermissive
 
 PCHFLAGS := -x c++-header
 
@@ -63,8 +109,8 @@ libsuffix := .a
 #
 
 DLL := g++
-DLLFLAGSPRE := -shared -g
-DLLFLAGSPOST :=
+DLLFLAGSPRE += -shared
+DLLFLAGSPOST += $(_rpath_flags)
 
 
 DLLFLAGS_LIBDIR := -L
@@ -81,11 +127,8 @@ LDFLAGS_LIBDIR := -L
 LDFLAGS_LIB := -l
 
 LD := g++
-LDFLAGSPRE := \
-    -g \
-
-LDFLAGSPOST := \
-    -lpthread
+LDFLAGSPRE +=
+LDFLAGSPOST += -lpthread $(_rpath_flags)
 
 
 ############################################################

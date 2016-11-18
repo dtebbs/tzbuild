@@ -1,0 +1,35 @@
+#!/bin/bash
+
+set -e
+
+function usage () {
+    echo ""
+    echo "Usage: jar2jjavai <input.jar>"
+    echo ""
+}
+
+if [ "" == "$1" ] || ! [ "" == "$2" ] ; then
+    usage
+    exit 1
+fi
+
+if ! [ -e "$1" ] ; then
+    echo "Error: input file '$1' does not exist"
+    usage
+    exit 1
+fi
+
+_jar=`pwd`/$1
+_base=${_jar%.jar}
+echo $_jar \-\> ${_base}
+
+mkdir -p $_base
+pushd $_base
+    unzip -o $_jar
+    for c in `find . -iname '*.class'` ; do
+        echo "$c" \-\> "${c%.class}.java"
+        javap "$c" > "${c%.class}.java"
+    done
+    popd
+
+# unzip -p $1 classes.jar > $2

@@ -43,15 +43,24 @@ _android_arch_name = $(strip					\
 
 ############################################################
 
-# NDK dir
+android_build_host := $(BUILDHOST)
+ifeq (linux64,$(BUILDHOST))
+  android_build_host := linux
+endif
+ifeq (linux32,$(BUILDHOST))
+  android_build_host := linux
+endif
 
+# SDK dir
+
+ANDROID_SDK_PATH ?= $(external_path)/android
 ANDROID_SDK_TARGET ?= android-15
 ANDROID_SDK_VERSION ?= 8
 ANDROID_SDK ?= $(ANDROID_SDK_PATH)/android-sdk-$(android_build_host)
 
 # NDK dir
 
-ANDROID_NDK ?= external/android/android-ndk-r9d
+ANDROID_NDK ?= $(ANDROID_SDK_PATH)/android-ndk-r9d
 NDK_PLATFORM ?= android-9
 NDK_GCC_VER ?= 4.8
 NDK_CLANG_VER ?= 3.4
@@ -65,26 +74,26 @@ NDK_LIBCPP ?= 0
 ANDROID_ARCH_NAME := $(call _android_arch_name,$(ARCH))
 
 ifeq ($(ARCH),armv5)
-  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
+  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
   NDK_TOOLPREFIX := arm-linux-androideabi-
-  NDK_PLATFORMDIR := \
+  NDK_PLATFORMDIR = \
     $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm
 endif
 ifeq ($(ARCH),armv7a)
-  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
+  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
   NDK_TOOLPREFIX := arm-linux-androideabi-
-  NDK_CLANG_FLAGS := -target armv7-none-linux-androideabi
-  NDK_PLATFORMDIR := \
+  NDK_CLANG_FLAGS = -target armv7-none-linux-androideabi
+  NDK_PLATFORMDIR = \
     $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm
   NDK_USE_CLANG ?= 1
 endif
 ifeq ($(ARCH),x86)
-  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/x86-$(NDK_GCC_VER)
+  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/x86-$(NDK_GCC_VER)
   NDK_TOOLPREFIX := i686-linux-android-
-  NDK_CLANG_FLAGS := -target i686-none-linux-android
-  NDK_PLATFORMDIR := \
+  NDK_CLANG_FLAGS = -target i686-none-linux-android
+  NDK_PLATFORMDIR = \
     $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-x86
-  NDK_USE_CLANG ?= 0
+  NDK_USE_CLANG ?= 1
 endif
 ifeq ($(NDK_ARCHDIR),)
   $(error Couldnt determine toolchain for android ARCH $(ARCH))
@@ -98,53 +107,55 @@ endif
 ifeq ($(BUILDHOST),linux64)
   NDK_HOSTOS := linux
 endif
+ifneq (,$(filter win%,$(BUILDHOST)))
+  NDK_HOSTOS := windows
+endif
 ifeq ($(NDK_HOSTOS),)
   $(error Couldnt find toolchain for BUILDHOST $(BUILDHOST))
 endif
 
-NDK_TOOLCHAIN := $(NDK_ARCHDIR)/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
-NDK_TOOLBIN := $(NDK_TOOLCHAIN)/bin
-NDK_CLANG_TOOLCHAIN := \
+NDK_TOOLCHAIN = $(NDK_ARCHDIR)/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
+NDK_TOOLBIN = $(NDK_TOOLCHAIN)/bin
+NDK_CLANG_TOOLCHAIN = \
  $(ANDROID_NDK)/toolchains/llvm-$(NDK_CLANG_VER)/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
-NDK_CLANG_TOOLBIN := $(NDK_CLANG_TOOLCHAIN)/bin
+NDK_CLANG_TOOLBIN = $(NDK_CLANG_TOOLCHAIN)/bin
 
 NDK_CLANG_FLAGS += -gcc-toolchain $(NDK_TOOLCHAIN) -no-canonical-prefixes
 
 # Some include paths
 
-NDK_GNUSTL_DIR := $(ANDROID_NDK)/sources/cxx-stl/gnu-libstdc++/$(NDK_GCC_VER)
-NDK_GNUSTL_LIBS := \
+NDK_GNUSTL_DIR = $(ANDROID_NDK)/sources/cxx-stl/gnu-libstdc++/$(NDK_GCC_VER)
+NDK_GNUSTL_LIBS = \
   $(NDK_GNUSTL_DIR)/libs/$(ANDROID_ARCH_NAME)/libgnustl_static.a
-NDK_GNUSTL_INCLUDES := $(NDK_GNUSTL_DIR)/include \
+NDK_GNUSTL_INCLUDES = $(NDK_GNUSTL_DIR)/include \
   $(NDK_GNUSTL_DIR)/libs/$(ANDROID_ARCH_NAME)/include
 
-NDK_STLPORT_DIR := $(ANDROID_NDK)/sources/cxx-stl/stlport
+NDK_STLPORT_DIR = $(ANDROID_NDK)/sources/cxx-stl/stlport
 NDK_STLPORT_LIBS += \
   $(NDK_STLPORT_DIR)/libs/$(ANDROID_ARCH_NAME)/libstlport_static.a
-NDK_STLPORT_INCLUDES := $(NDK_STLPORT_DIR)/stlport
+NDK_STLPORT_INCLUDES = $(NDK_STLPORT_DIR)/stlport
 
-NDK_LIBCPP_DIR := $(ANDROID_NDK)/sources/cxx-stl/llvm-libc++
-NDK_LIBCPP_LIBS := $(NDK_LIBCPP_DIR)/libs/$(ANDROID_ARCH_NAME)/libc++_static.a
-NDK_LIBCPP_INCLUDES := $(NDK_LIBCPP_DIR)/libcxx/include
+NDK_LIBCPP_DIR = $(ANDROID_NDK)/sources/cxx-stl/llvm-libc++
+NDK_LIBCPP_LIBS = $(NDK_LIBCPP_DIR)/libs/$(ANDROID_ARCH_NAME)/libc++_static.a
+NDK_LIBCPP_INCLUDES = $(NDK_LIBCPP_DIR)/libcxx/include
 
 ifeq (1,$(NDK_LIBCPP))
-  NDK_STL_DIR := $(NDK_LIBCPP_DIR)
-  NDK_STL_LIBS += $(NDK_LIBCPP_LIBS)
-  NDK_STL_INCLUDES := $(NDK_LIBCPP_INCLUDES)
+  NDK_STL_DIR = $(NDK_LIBCPP_DIR)
+  NDK_STL_LIBS = $(NDK_LIBCPP_LIBS)
+  NDK_STL_INCLUDES = $(NDK_LIBCPP_INCLUDES)
 else
   ifeq (1,$(NDK_STLPORT))
-    NDK_STL_DIR := $(NDK_STLPORT_DIR)
-    NDK_STL_LIBS += $(NDK_STLPORT_LIBS)
-    NDK_STL_INCLUDES := $(NDK_STLPORT_INCLUDES)
+    NDK_STL_DIR = $(NDK_STLPORT_DIR)
+    NDK_STL_LIBS = $(NDK_STLPORT_LIBS)
+    NDK_STL_INCLUDES = $(NDK_STLPORT_INCLUDES)
   else
-    NDK_STL_DIR := $(NDK_GNUSTL_DIR)
-    NDK_STL_LIBS += $(NDK_GNUSTL_LIBS)
-    NDK_STL_INCLUDES := $(NDK_GNUSTL_INCLUDES)
-    # $(warning Using GNUSTL: $(NDK_GNUSTL_INCLUDES))
+    NDK_STL_DIR = $(NDK_GNUSTL_DIR)
+    NDK_STL_LIBS = $(NDK_GNUSTL_LIBS)
+    NDK_STL_INCLUDES = $(NDK_GNUSTL_INCLUDES)
   endif
 endif
 
-NDK_PLATFORM_INCLUDES := \
+NDK_PLATFORM_INCLUDES = \
   $(ANDROID_NDK)/sources/android/native_app_glue \
   $(NDK_PLATFORMDIR)/usr/include
 
@@ -208,79 +219,91 @@ VARIANT:=$(strip $(VARIANT)-$(ARCH))
 # -c <cpp>
 # -o <out>
 
+# Don't use := for compiler, since the external_path location, and
+# hence android NDK, may not be known yet.
+
 ifeq (1,$(NDK_USE_CLANG))
-  CXX := $(NDK_CLANG_TOOLBIN)/clang++
-  CXXFLAGSPOST += $(NDK_CLANG_FLAGS)
+  CC = $(NDK_CLANG_TOOLBIN)/clang++
+  CFLAGSPOST += $(NDK_CLANG_FLAGS)
 else
-  CXX := $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)g++
-  CXXFLAGSPRE += -funswitch-loops -finline-limit=256 -Wno-psabi
+  CC = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)g++
+  CFLAGSPRE += -funswitch-loops -finline-limit=256 -Wno-psabi
 endif
 
-CXXFLAGSPRE += \
-  -ffunction-sections -funwind-tables -fno-rtti -fstrict-aliasing \
-  -Wall -Wno-unknown-pragmas -Wno-reorder -Wno-trigraphs \
+CXX = $(CC)
+
+CFLAGSPRE += \
+  -ffunction-sections -funwind-tables -fstrict-aliasing \
+  -Wall -Wno-unknown-pragmas -Wno-trigraphs \
   -Wno-unused-parameter \
   -DANDROID -DTZ_ANDROID -DTZ_USE_V8
 
 # -fstack-protector
 
 ifeq ($(ARCH),armv5)
-  CXXFLAGSPRE += \
+  CFLAGSPRE += \
     -fpic \
     -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ \
     -mthumb -march=armv5te -mtune=xscale -msoft-float
 endif
 
 ifeq ($(ARCH),armv7a)
-  CXXFLAGSPRE += \
+  CFLAGSPRE += \
     -fpic \
     -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ \
     -mthumb
 
   ifeq ($(TEGRA3),1)
-    CXXFLAGSPRE += -mfpu=neon -mcpu=cortex-a9 -mfloat-abi=softfp
+    CFLAGSPRE += -mfpu=neon -mcpu=cortex-a9 -mfloat-abi=softfp
   else
-    CXXFLAGSPRE += -march=armv7-a -mfloat-abi=softfp -mfpu=vfp
+    CFLAGSPRE += -march=armv7-a -mfloat-abi=softfp -mfpu=vfp
   endif
 endif
 
 ifeq ($(ARCH),x86)
-  CXXFLAGSPRE += -Wa,--noexecstack
+  CFLAGSPRE += -Wa,--noexecstack
 endif
 
-CXXFLAGSPOST += \
- $(addprefix -I,$(NDK_STL_INCLUDES) $(NDK_PLATFORM_INCLUDES)) \
- -DFASTCALL= -Wa,--noexecstack -fexceptions
+CFLAGSPOST += \
+ $(addprefix -I,$(NDK_PLATFORM_INCLUDES)) \
+ -DFASTCALL= -Wa,--noexecstack
 
 ifeq ($(CONFIG),debug)
-  CXXFLAGSPOST += -DDEBUG -D_DEBUG
+  CFLAGSPOST += -DDEBUG -D_DEBUG
 endif
 ifeq ($(CONFIG),release)
-  CXXFLAGSPOST += -DNDEBUG
+  CFLAGSPOST += -DNDEBUG
 endif
 
 ifeq ($(C_OPTIMIZE),1)
-  CXXFLAGSPOST += -O3 -fomit-frame-pointer -ffast-math -ftree-vectorize
+  CFLAGSPOST += -g -O3 -ffast-math -ftree-vectorize
+  # CFLAGSPOST += -fomit-frame-pointer
 
   # WORKAROUND: gcc 4.8 targeting x86
   ifeq (4.8,$(NDK_GCC_VER))
     ifeq (x86,$(ARCH))
       ifneq (1,$(NDK_USE_CLANG))
-        CXXFLAGSPOST += -fno-tree-vectorize
+        CFLAGSPOST += -fno-tree-vectorize
       endif
     endif
   endif
 else
-  CXXFLAGSPOST += -O0
+  CFLAGSPOST += -O0
 endif
+
 ifeq ($(C_SYMBOLS),1)
-  CXXFLAGSPOST += -g
-else
-  dll-post = \
-    $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)strip --strip-unneeded \
-    $($(1)_dllfile)
+  CFLAGSPOST += -g -funwind-tables
 endif
-CXXFLAGSPOST += -c
+
+dll-post = \
+  $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)strip --strip-unneeded \
+  $($(1)_dllfile)
+CFLAGSPOST += -c
+
+CXXFLAGSPRE := $(CFLAGSPRE) -std=c++11 -Wno-reorder -fno-rtti
+CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions $(addprefix -I,$(NDK_STL_INCLUDES))
+
+CFLAGSPOST += -x c -std=gnu11
 
 PCHFLAGS := -x c++-header
 
@@ -288,7 +311,7 @@ PCHFLAGS := -x c++-header
 # AR
 #
 
-AR := $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)ar
+AR = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)ar
 
 ARFLAGSPRE := cr
 arout :=
@@ -301,15 +324,15 @@ libsuffix := .a
 # OBJDUMP
 #
 
-OBJDUMP := $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)objdump
-OBJDUMP_DISASS := -S
+OBJDUMP = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)objdump
+OBJDUMP_DISASS := -S -l
 
 #
 # OTHER TOOLS
 #
 
-NM := $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)nm
-READELF := $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)readelf
+NM = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)nm
+READELF = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)readelf
 
 #
 # DLLS
@@ -336,11 +359,11 @@ READELF := $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)readelf
 # -llog -lc -lm -o ./obj/local/armeabi-v7a/libhelloneon.so
 
 ifeq (1,$(NDK_USE_CLANG))
-  DLL := $(NDK_CLANG_TOOLBIN)/clang++
+  DLL = $(NDK_CLANG_TOOLBIN)/clang++
   DLLFLAGSPOST += $(NDK_CLANG_FLAGS)
 else
-  DLL := $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)gcc
-  DLLFLAGSPOST :=
+  DLL = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)gcc
+  DLLFLAGSPOST =
 endif
 DLLFLAGSPRE += -shared \
   --sysroot=$(NDK_PLATFORMDIR) \
@@ -375,9 +398,9 @@ DLLKEEPSYM_POST := -Wl,-no-whole-archive
 # APPS
 #
 
-LD := $(DLL)
-LDFLAGSPRE := $(DLLFLAGSPRE)
-LDFLAGSPOST := $(DLLFLAGSPOST)
-LDFLAGS_LIBDIR := $(DLLFLAGS_LIBDIR)
-LDFLAGS_LIB := $(DLLFLAGS_LIB)
-binsuffix := $(dllsuffix)
+LD = $(DLL)
+LDFLAGSPRE = $(DLLFLAGSPRE)
+LDFLAGSPOST = $(DLLFLAGSPOST)
+LDFLAGS_LIBDIR = $(DLLFLAGS_LIBDIR)
+LDFLAGS_LIB = $(DLLFLAGS_LIB)
+binsuffix = $(dllsuffix)
