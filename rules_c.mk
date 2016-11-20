@@ -1002,11 +1002,11 @@ define _make_apk_rule
 
   .PHONY : $(1)
   $(1) : $(1)_do_prebuild $(2)/AndroidManifest.xml
-	APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
+	ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
 
   .PHONY : $(1)_install
   $(1)_install : $(1)_do_prebuild $(2)/AndroidManifest.xml
-	APKPATH=$(2) ./gradlew :$(1):install$(CONFIG)
+	ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew :$(1):install$(CONFIG)
 
   .PHONY : $(1)_run
   $(1)_run_dot:=$(if $(filter com.%,$($(1)_activity)),,.)
@@ -1032,7 +1032,7 @@ define _make_apk_rule
 
   .PHONY : $(1)_java_clean
   $(1)_java_clean : $(2)/AndroidManifest.xml
-	APKPATH=$(2) ./gradlew clean
+	ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew clean
 
   .PHONY : $(1)_clean
   $(1)_clean :
