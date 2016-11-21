@@ -941,8 +941,7 @@ $(foreach apk,$(APKS),                                                      \
   )                                                                         \
   $(eval $(apk)_apk_dest := $(BINOUTDIR)/$(apk))                            \
   $(eval $(apk)_apk_deploy_name :=                                          \
-    $(apk)-$($(apk)_version)$(strip $($(apk)_deploytag))$(TAG).apk          \
-  )                                                                         \
+    $(apk)-$($(apk)_version)$(strip $($(apk)_deploytag))$(TAG).apk)         \
   $(eval $(apk)_apk_file := $($(apk)_apk_dest)/$(apk)-$(CONFIG).apk)        \
   $(eval                                                                    \
     $(apk)_archs := $(if $($(apk)_archs),$($(apk)_archs),$(ARCH))           \
