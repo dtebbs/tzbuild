@@ -1272,6 +1272,8 @@ def main():
             extras.append('gearvr')
             options['gearvr'] = True
             glEsVersion = "0x00030000"
+        elif "--require-gles30" == arg:
+            glEsVersion = "0x00030000"
         else:
             print "Error: unknown parameter: '%s'" % arg
             print ""
