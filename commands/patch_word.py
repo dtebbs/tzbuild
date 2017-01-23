@@ -17,23 +17,22 @@ if "__main__" == __name__:
     if 4 != len(args):
         usage(1)
 
-    print "HERE"
-
     filename = args[1]
     offset = int(args[2])
     value = int(args[3], 16)
 
-    print "filename: %s" % filename
-    print "offset: %d (0x%x)" % (offset, offset)
-    print "value: %d (0x%x)" % (value, value)
+    print "file to patch  : %s" % filename
+    print "  offset       : %d (0x%x)" % (offset, offset)
 
     with open(filename, "r+b") as f:
 
         f.seek(offset)
         curbytes = f.read(4)
         cur = struct.unpack("<I", curbytes)
-        print "current value is: 0x%x" % cur
+        print "  original value: 0x%x" % cur
 
         f.seek(offset)
         newbytes = struct.pack("<I", value)
         f.write(newbytes)
+
+    print "  new value    : %d (0x%x)" % (value, value)
