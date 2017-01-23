@@ -962,8 +962,6 @@ define _make_apk_native_rule
 	+$(MAKE) ARCH=$(3) $($(1)_native)                   \
       BINDIR=$(2)/libs/$(call _android_arch_name,$(3))
 
-  $(1) $(1)_install : _$(1)_make_$(3)_native_libs
-
 endef
 
 # Rule to make an APK
@@ -997,7 +995,8 @@ define _make_apk_rule
       $($(1)_apk_depflags)                                                   \
       $($(1)_flags)
 
-  $(1)_do_prebuild :
+  $(1)_do_prebuild : $(foreach a,$($(1)_archs),_$(1)_make_$(a)_native_libs)
+
 	echo "== PRE BUILD =="
 	$($(1)_prebuild)
 
