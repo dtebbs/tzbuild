@@ -972,6 +972,8 @@ endef
 define _make_apk_rule
 
   .PHONY : $(2)/AndroidManifest.xml
+  .PHONY : $(1)_do_prebuild $(1)_do_gradle $(1)_post_build
+
   $(2)/AndroidManifest.xml :
 	@echo [MAKE APK] $(2)
 	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
@@ -995,17 +997,25 @@ define _make_apk_rule
       $($(1)_apk_depflags)                                                   \
       $($(1)_flags)
 
-  .PHONY : $(1)_do_prebuild
   $(1)_do_prebuild :
+	echo "== PRE BUILD =="
 	$($(1)_prebuild)
 
-  .PHONY : $(1)
-  $(1) : $(1)_do_prebuild $(2)/AndroidManifest.xml
+  $(1)_do_gradle : $(1)_do_prebuild $(2)/AndroidManifest.xml
 	ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
+	$($(1)_postbuild)
+	$(if $($(1)_postbuild),$(if $($(1)_repackage), \
+      ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG) \
+    ))
+
+  # $(1)_do_postbuild : $(1)_do_gradle
+  # 	echo "== POST BUILD =="
+
+  $(1) : $(1)_do_gradle
 
   .PHONY : $(1)_install
-  $(1)_install : $(1)_do_prebuild $(2)/AndroidManifest.xml
-	ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew :$(1):install$(CONFIG)
+  $(1)_install : $(1)_do_gradle
+	adb install -rsd $($(1)_apk_file)
 
   .PHONY : $(1)_run
   $(1)_run_dot:=$(if $(filter com.%,$($(1)_activity)),,.)
