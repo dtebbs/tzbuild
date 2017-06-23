@@ -528,11 +528,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
           android:versionCode="%VERSION_INT%"
           android:versionName="%VERSION_DOT_4%" """
 
-    if options['gearvr']:
-        MANIFEST_0 += """
-            android:installLocation="internalOnly" """
-    else:
-        MANIFEST_0 += """
+    MANIFEST_0 += """
             android:installLocation="auto" """
 
     MANIFEST_0 += """>"""
