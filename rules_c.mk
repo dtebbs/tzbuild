@@ -1014,7 +1014,7 @@ define _make_apk_rule
 
   .PHONY : $(1)_install
   $(1)_install : $(1)_do_gradle
-	adb install -rsd $($(1)_apk_file)
+	adb install -r -d $($(1)_apk_file)
 
   .PHONY : $(1)_run
   $(1)_run_dot:=$(if $(filter com.%,$($(1)_activity)),,.)
