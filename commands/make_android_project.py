@@ -340,6 +340,30 @@ GEARVR_PERMISSIONS = \
     ";android.permission.ACCESS_NETWORK_STATE" + \
     ";android.permission.READ_EXTERNAL_STORAGE"
 
+MANIFEST_1_C2INC = """
+    <activity
+          android:name="jp.co.c2inc.licensecheck.LicenseCheckActivity"
+          android:launchMode="singleTask">
+          <intent-filter>
+              <action android:name="android.intent.action.MAIN" />
+              <category android:name="android.intent.category.LAUNCHER" />
+          </intent-filter>
+
+          <intent-filter>
+              <action android:name="android.intent.action.VIEW" />
+              <category android:name="android.intent.category.DEFAULT" />
+              <category android:name="android.intent.category.BROWSABLE" />
+              <data android:scheme="%PACKAGE_NAME%"/>
+          </intent-filter>
+    </activity>
+
+    <service android:name="jp.co.c2inc.licensecheck.BVCService"/>"""
+
+C2INC_PERMISSIONS = \
+    ";android.permission.ACCESS_NETWORK_STATE" + \
+    ";android.permission.INTERNET" + \
+    ";android.permission.USE_ALML"
+
 #
 #
 #
@@ -446,6 +470,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
         'mdotm'      : [ MANIFEST_1_MDOTM, MDOTM_PERMISSIONS, False ],
         'expansion'  : [ MANIFEST_1_EXPANSION, EXPANSION_PERMISSIONS, False ],
         'gearvr'     : [ MANIFEST_1_GEARVR, GEARVR_PERMISSIONS, True ],
+        'c2inc'      : [ MANIFEST_1_C2INC, C2INC_PERMISSIONS, True ],
         }
 
     # icon
@@ -1002,6 +1027,7 @@ def usage():
     --zirconia          - (optional) include Zirconia permissions
     --mobiroo           - (optional) include mobiroo entries to manifest
     --gearvr            - (optional) include GearVR entries to manifest
+    --c2inc             - (optional) include C2Inc manifest entries
 
     (Ad networks)
     --admob             - (optional) include AdMob activity decl
@@ -1077,6 +1103,7 @@ def main():
         'gamepad': False,
         'banner': None,
         'gearvr': None,
+        'c2inc': None,
         }
 
     def add_meta(kv, meta_map = meta):
@@ -1268,6 +1295,8 @@ def main():
             extras.append('gearvr')
             options['gearvr'] = True
             glEsVersion = "0x00030000"
+        elif "--c2inc" == arg:
+            extras.append('c2inc')
         elif "--require-gles30" == arg:
             glEsVersion = "0x00030000"
         else:
