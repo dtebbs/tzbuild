@@ -68,6 +68,7 @@ NDK_CLANG_VER ?= 3.4
 NDK_HOSTARCH ?= x86_64
 NDK_STLPORT ?= 0
 NDK_LIBCPP ?= 0
+NDK_IS_R14_OR_GREATER ?= 0
 
 # Toolset for which arch
 
@@ -116,8 +117,15 @@ endif
 
 NDK_TOOLCHAIN = $(NDK_ARCHDIR)/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
 NDK_TOOLBIN = $(NDK_TOOLCHAIN)/bin
-NDK_CLANG_TOOLCHAIN = \
- $(ANDROID_NDK)/toolchains/llvm-$(NDK_CLANG_VER)/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
+
+ifeq (1,$(NDK_IS_R14_OR_GREATER))
+  NDK_CLANG_TOOLCHAIN = \
+   $(ANDROID_NDK)/toolchains/llvm/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
+else
+  NDK_CLANG_TOOLCHAIN = \
+   $(ANDROID_NDK)/toolchains/llvm-$(NDK_CLANG_VER)/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
+endif
+
 NDK_CLANG_TOOLBIN = $(NDK_CLANG_TOOLCHAIN)/bin
 
 NDK_CLANG_FLAGS += -gcc-toolchain $(NDK_TOOLCHAIN) -no-canonical-prefixes
@@ -155,9 +163,22 @@ else
   endif
 endif
 
-NDK_PLATFORM_INCLUDES = \
-  $(ANDROID_NDK)/sources/android/native_app_glue \
-  $(NDK_PLATFORMDIR)/usr/include
+ifeq (1,$(NDK_IS_R14_OR_GREATER))
+  NDK_PLATFORM_INCLUDES = \
+    $(ANDROID_NDK)/sources/android/native_app_glue \
+    $(ANDROID_NDK)/sysroot/usr/include
+
+  ifeq ($(ARCH),armv7a)
+    NDK_PLATFORM_INCLUDES += $(ANDROID_NDK)/sysroot/usr/include/arm-linux-androideabi
+  endif
+  ifeq ($(ARCH),x86)
+    NDK_PLATFORM_INCLUDES += $(ANDROID_NDK)/sysroot/usr/include/i686-linux-android
+  endif
+else
+  NDK_PLATFORM_INCLUDES = \
+    $(ANDROID_NDK)/sources/android/native_app_glue \
+    $(NDK_PLATFORMDIR)/usr/include
+endif
 
 # Set the variant to incldue the arch
 
