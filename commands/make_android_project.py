@@ -341,22 +341,6 @@ GEARVR_PERMISSIONS = \
     ";android.permission.READ_EXTERNAL_STORAGE"
 
 MANIFEST_1_C2INC = """
-    <activity
-          android:name="jp.co.c2inc.licensecheck.LicenseCheckActivity"
-          android:launchMode="singleTask">
-          <intent-filter>
-              <action android:name="android.intent.action.MAIN" />
-              <category android:name="android.intent.category.LAUNCHER" />
-          </intent-filter>
-
-          <intent-filter>
-              <action android:name="android.intent.action.VIEW" />
-              <category android:name="android.intent.category.DEFAULT" />
-              <category android:name="android.intent.category.BROWSABLE" />
-              <data android:scheme="%PACKAGE_NAME%"/>
-          </intent-filter>
-    </activity>
-
     <service android:name="jp.co.c2inc.licensecheck.BVCService"/>"""
 
 C2INC_PERMISSIONS = \
@@ -586,11 +570,20 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     else:
         MANIFEST_0 += ">"
 
+    if options['c2inc']:
+        MANIFEST_0 += """
+            <activity android:name="jp.co.c2inc.licensecheck.LicenseCheckActivity"
+            """
+    else:
+        MANIFEST_0 += """
+            <activity android:name="%ACTIVITY_NAME%"
+            """
+
     MANIFEST_0 += """
-        <activity android:name="%ACTIVITY_NAME%"
-                  android:label="%APP_TITLE%"
-                  android:launchMode="singleTask"
-                  android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|touchscreen|smallestScreenSize" """
+          android:label="%APP_TITLE%"
+          android:launchMode="singleTask"
+          android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|touchscreen|smallestScreenSize"
+          """
 
     if options['gearvr']:
         MANIFEST_0 += """
@@ -617,8 +610,21 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
                     <action android:name="android.intent.action.MAIN" />
                     <category android:name="android.intent.category.INFO" />
                 </intent-filter>"""
+    elif options['c2inc']:
+        MANIFEST_0 += """
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="%PACKAGE_NAME%"/>
+            </intent-filter>
+            """
     else:
-    #if not override_main_activity:
         MANIFEST_0 += """
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1297,6 +1303,7 @@ def main():
             glEsVersion = "0x00030000"
         elif "--c2inc" == arg:
             extras.append('c2inc')
+            options['c2inc'] = True
         elif "--require-gles30" == arg:
             glEsVersion = "0x00030000"
         else:
