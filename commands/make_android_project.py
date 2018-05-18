@@ -341,7 +341,15 @@ GEARVR_PERMISSIONS = \
     ";android.permission.READ_EXTERNAL_STORAGE"
 
 MANIFEST_1_C2INC = """
-    <service android:name="jp.co.c2inc.licensecheck.BVCService"/>"""
+    <service android:name="jp.co.c2inc.licensecheck.C2BVCService"/>
+
+    <receiver android:name="jp.co.c2inc.licensecheck.C2Receiver">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+        </intent-filter>
+    </receiver>
+    """
 
 C2INC_PERMISSIONS = \
     ";android.permission.ACCESS_NETWORK_STATE" + \
