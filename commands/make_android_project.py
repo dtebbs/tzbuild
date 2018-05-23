@@ -581,13 +581,24 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     if options['c2inc']:
         MANIFEST_0 += """
             <activity android:name="jp.co.c2inc.licensecheck.LicenseCheckActivity"
-            """
-    else:
-        MANIFEST_0 += """
-            <activity android:name="%ACTIVITY_NAME%"
+                      android:launchMode="singleTask">
+
+                <intent-filter>
+                    <action android:name="android.intent.action.MAIN" />
+                    <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+
+                <intent-filter>
+                    <action android:name="android.intent.action.VIEW" />
+                    <category android:name="android.intent.category.DEFAULT" />
+                    <category android:name="android.intent.category.BROWSABLE" />
+                    <data android:scheme="%PACKAGE_NAME%"/>
+                </intent-filter>
+            </activity>
             """
 
     MANIFEST_0 += """
+        <activity android:name="%ACTIVITY_NAME%"
           android:label="%APP_TITLE%"
           android:launchMode="singleTask"
           android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|touchscreen|smallestScreenSize"
@@ -620,17 +631,6 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
                 </intent-filter>"""
     elif options['c2inc']:
         MANIFEST_0 += """
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="%PACKAGE_NAME%"/>
-            </intent-filter>
             """
     else:
         MANIFEST_0 += """
