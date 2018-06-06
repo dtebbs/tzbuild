@@ -354,7 +354,7 @@ MANIFEST_1_C2INC = """
 C2INC_PERMISSIONS = \
     ";android.permission.ACCESS_NETWORK_STATE" + \
     ";android.permission.INTERNET" + \
-    ";android.permission.USE_ALML"
+    ";com.kddi.market.permission.USE_ALML"
 
 #
 #
