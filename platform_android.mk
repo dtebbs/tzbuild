@@ -55,6 +55,7 @@ endif
 
 ANDROID_SDK_PATH ?= $(external_path)/android
 ANDROID_SDK_TARGET ?= android-15
+ANDROID_SDK_TARGET_NUM ?= 15
 ANDROID_SDK_VERSION ?= 8
 ANDROID_SDK ?= $(ANDROID_SDK_PATH)/android-sdk-$(android_build_host)
 
@@ -144,8 +145,11 @@ NDK_STLPORT_LIBS += \
 NDK_STLPORT_INCLUDES = $(NDK_STLPORT_DIR)/stlport
 
 NDK_LIBCPP_DIR = $(ANDROID_NDK)/sources/cxx-stl/llvm-libc++
-NDK_LIBCPP_LIBS = $(NDK_LIBCPP_DIR)/libs/$(ANDROID_ARCH_NAME)/libc++_static.a
-NDK_LIBCPP_INCLUDES = $(NDK_LIBCPP_DIR)/libcxx/include
+NDK_LIBCPP_LIBS = $(NDK_LIBCPP_DIR)/libs/$(ANDROID_ARCH_NAME)/libc++_static.a \
+				  $(NDK_LIBCPP_DIR)/libs/$(ANDROID_ARCH_NAME)/libc++abi.a
+
+#NDK_LIBCPP_INCLUDES = $(NDK_LIBCPP_DIR)/libcxx/include
+NDK_LIBCPP_INCLUDES = $(NDK_LIBCPP_DIR)/include
 
 ifeq (1,$(NDK_LIBCPP))
   NDK_STL_DIR = $(NDK_LIBCPP_DIR)
@@ -164,15 +168,16 @@ else
 endif
 
 ifeq (1,$(NDK_IS_R14_OR_GREATER))
-  NDK_PLATFORM_INCLUDES = \
-    $(ANDROID_NDK)/sources/android/native_app_glue \
-    $(ANDROID_NDK)/sysroot/usr/include
+  NDK_PLATFORM_INCLUDES = $(ANDROID_NDK)/sources/android/native_app_glue
 
   ifeq ($(ARCH),armv7a)
-    NDK_PLATFORM_INCLUDES += $(ANDROID_NDK)/sysroot/usr/include/arm-linux-androideabi
+	NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/arm-linux-androideabi
   endif
   ifeq ($(ARCH),x86)
-    NDK_PLATFORM_INCLUDES += $(ANDROID_NDK)/sysroot/usr/include/i686-linux-android
+	NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/i686-linux-android
+  endif
+  ifeq ($(ARCH),x86_64)
+	NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/x86_64-linux-android
   endif
 else
   NDK_PLATFORM_INCLUDES = \
@@ -289,6 +294,14 @@ CFLAGSPOST += \
  $(addprefix -I,$(NDK_PLATFORM_INCLUDES)) \
  -DFASTCALL= -Wa,--noexecstack
 
+ifeq (1,$(NDK_IS_R14_OR_GREATER))
+ CFLAGSPOST += \
+  --sysroot=$(ANDROID_NDK)/sysroot \
+  -I$(ANDROID_NDK)/sysroot/usr/include \
+  -isystem $(NDK_ISYSTEM) \
+  -D__ANDROID_API__=$(ANDROID_SDK_TARGET_NUM)
+endif
+
 ifeq ($(CONFIG),debug)
   CFLAGSPOST += -DDEBUG -D_DEBUG
 endif
@@ -387,7 +400,7 @@ else
   DLLFLAGSPOST =
 endif
 DLLFLAGSPRE += -shared \
-  --sysroot=$(NDK_PLATFORMDIR) \
+  --sysroot=$(NDK_PLATFORMDIR)
 # -Wl,-soname,$$(notdir $$@)
 # -nostdlib
 # -Wl,-shared,-Bsymbolic
