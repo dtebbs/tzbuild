@@ -297,7 +297,7 @@ CFLAGSPOST += \
  $(addprefix -I,$(NDK_PLATFORM_INCLUDES)) \
  -DFASTCALL= -Wa,--noexecstack
 
-ifeq (1,$(NDK_IS_R14_OR_GREATER))
+ifeq (1,$(NDK_HAS_UNIFIED_INCLUDES))
  CFLAGSPOST += \
   --sysroot=$(ANDROID_NDK)/sysroot \
   -I$(ANDROID_NDK)/sysroot/usr/include \
