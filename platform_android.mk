@@ -34,11 +34,13 @@
 ############################################################
 
 # 1 - tzbuild arch (armv7a, x86, etc)
-_android_arch_name = $(strip					\
-  $(if $(filter armv5,$(1)),armeabi,			\
-    $(if $(filter armv7a,$(1)),armeabi-v7a,		\
-      $(1)										\
-    )											\
+_android_arch_name = $(strip                   \
+  $(if $(filter armv5,$(1)),armeabi,           \
+    $(if $(filter armv7a,$(1)),armeabi-v7a,    \
+      $(if $(filter arm64,$(1)),arm64-v8a,     \
+        $(1)                                   \
+      )                                        \
+    )                                          \
   ))
 
 ############################################################
@@ -96,6 +98,14 @@ ifeq ($(ARCH),x86)
   NDK_CLANG_FLAGS = -target i686-none-linux-android
   NDK_PLATFORMDIR = \
     $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-x86
+  NDK_USE_CLANG ?= 1
+endif
+ifeq ($(ARCH),arm64)
+  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/aarch64-linux-android-$(NDK_GCC_VER)
+  NDK_TOOLPREFIX := aarch64-linux-android
+  NDK_CLANG_FLAGS = -target aarch64-linux-android
+  NDK_PLATFORMDIR = \
+    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm64
   NDK_USE_CLANG ?= 1
 endif
 ifeq ($(NDK_ARCHDIR),)
