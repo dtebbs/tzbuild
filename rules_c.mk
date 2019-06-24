@@ -1001,7 +1001,7 @@ define _make_apk_rule
 	$($(1)_prebuild)
 
   $(1)_do_gradle : $(1)_do_prebuild $(2)/AndroidManifest.xml
-	ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
 	$($(1)_postbuild)
 	$(if $($(1)_postbuild),$(if $($(1)_repackage), \
       ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG) \
