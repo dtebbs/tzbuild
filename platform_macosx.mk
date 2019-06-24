@@ -55,6 +55,9 @@ XCODE_SDK_ROOT:=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.plat
 ifeq (,$(wildcard $(XCODE_SDK_ROOT)))
   XCODE_SDK_ROOT:=/Developer/SDKs/MacOSX$(XCODE_SDK_VER).sdk
 endif
+ifeq (,$(wildcard $(XCODE_SDK_ROOT)))
+  XCODE_SDK_ROOT:=/Library/Developer/CommandLineTools/SDKs/MacOSX$(XCODE_SDK_VER).sdk
+endif
 
 ############################################################
 
