@@ -79,38 +79,48 @@ NDK_HAS_UNIFIED_INCLUDES ?= 0
 ANDROID_ARCH_NAME := $(call _android_arch_name,$(ARCH))
 
 ifeq ($(ARCH),armv5)
-  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
-  NDK_TOOLPREFIX := arm-linux-androideabi-
+  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
+  NDK_ARCHNAME := arm-linux-androideabi
   NDK_PLATFORMDIR = \
     $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm
 endif
 ifeq ($(ARCH),armv7a)
-  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
-  NDK_TOOLPREFIX := arm-linux-androideabi-
+  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
+  NDK_ARCHNAME := arm-linux-androideabi
   NDK_CLANG_FLAGS = -target armv7-none-linux-androideabi
   NDK_PLATFORMDIR = \
     $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm
   NDK_USE_CLANG ?= 1
 endif
-ifeq ($(ARCH),x86)
-  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/x86-$(NDK_GCC_VER)
-  NDK_TOOLPREFIX := i686-linux-android-
-  NDK_CLANG_FLAGS = -target i686-none-linux-android
-  NDK_PLATFORMDIR = \
-    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-x86
-  NDK_USE_CLANG ?= 1
-endif
 ifeq ($(ARCH),arm64)
-  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/aarch64-linux-android-$(NDK_GCC_VER)
-  NDK_TOOLPREFIX := aarch64-linux-android
+  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/aarch64-linux-android-$(NDK_GCC_VER)
+  NDK_ARCHNAME := aarch64-linux-android
   NDK_CLANG_FLAGS = -target aarch64-linux-android
   NDK_PLATFORMDIR = \
     $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm64
   NDK_USE_CLANG ?= 1
 endif
+ifeq ($(ARCH),x86)
+  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/x86-$(NDK_GCC_VER)
+  NDK_ARCHNAME := i686-linux-android
+  NDK_CLANG_FLAGS = -target i686-none-linux-android
+  NDK_PLATFORMDIR = \
+    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-x86
+  NDK_USE_CLANG ?= 1
+endif
+ifeq ($(ARCH),x86_64)
+  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/x86_64-$(NDK_GCC_VER)
+  NDK_ARCHNAME := x86_64-linux-android
+  NDK_CLANG_FLAGS = -target x86_64-none-linux-android
+  NDK_PLATFORMDIR = \
+    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-x86_64
+  NDK_USE_CLANG ?= 1
+endif
 ifeq ($(NDK_ARCHDIR),)
   $(error Couldnt determine toolchain for android ARCH $(ARCH))
 endif
+
+NDK_TOOLPREFIX := $(NDK_ARCHNAME)-
 
 # Find toolset for this platfom
 
@@ -183,22 +193,14 @@ ifeq (1,$(NDK_HAS_UNIFIED_INCLUDES))
     $(ANDROID_NDK)/sources/android/native_app_glue \
     $(ANDROID_NDK)/sysroot/usr/include
 
-  ifeq ($(ARCH),armv7a)
-	NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/arm-linux-androideabi
-  endif
-  ifeq ($(ARCH),x86)
-	NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/i686-linux-android
-  endif
-  ifeq ($(ARCH),x86_64)
-	NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/x86_64-linux-android
-  endif
+  NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/$(NDK_ARCHNAME)
 else
   NDK_PLATFORM_INCLUDES = \
     $(ANDROID_NDK)/sources/android/native_app_glue \
     $(NDK_PLATFORMDIR)/usr/include
 endif
 
-# Set the variant to incldue the arch
+# Set the variant to include the arch
 
 VARIANT:=$(strip $(VARIANT)-$(ARCH))
 
