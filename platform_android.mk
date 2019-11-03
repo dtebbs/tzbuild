@@ -415,7 +415,8 @@ else
   DLLFLAGSPOST =
 endif
 DLLFLAGSPRE += -shared \
-  --sysroot=$(NDK_PLATFORMDIR)
+  --sysroot=$(NDK_PLATFORMDIR) \
+  -nostdlib++
 # -Wl,-soname,$$(notdir $$@)
 # -nostdlib
 # -Wl,-shared,-Bsymbolic
