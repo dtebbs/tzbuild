@@ -340,6 +340,22 @@ GEARVR_PERMISSIONS = \
     ";android.permission.ACCESS_NETWORK_STATE" + \
     ";android.permission.READ_EXTERNAL_STORAGE"
 
+MANIFEST_1_C2INC = """
+    <service android:name="jp.co.c2inc.licensecheck.C2BVCService"/>
+
+    <receiver android:name="jp.co.c2inc.licensecheck.C2Receiver">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED"/>
+            <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+        </intent-filter>
+    </receiver>
+    """
+
+C2INC_PERMISSIONS = \
+    ";android.permission.ACCESS_NETWORK_STATE" + \
+    ";android.permission.INTERNET" + \
+    ";com.kddi.market.permission.USE_ALML"
+
 #
 #
 #
@@ -446,6 +462,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
         'mdotm'      : [ MANIFEST_1_MDOTM, MDOTM_PERMISSIONS, False ],
         'expansion'  : [ MANIFEST_1_EXPANSION, EXPANSION_PERMISSIONS, False ],
         'gearvr'     : [ MANIFEST_1_GEARVR, GEARVR_PERMISSIONS, True ],
+        'c2inc'      : [ MANIFEST_1_C2INC, C2INC_PERMISSIONS, True ],
         }
 
     # icon
@@ -561,11 +578,31 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     else:
         MANIFEST_0 += ">"
 
+    if options['c2inc']:
+        MANIFEST_0 += """
+            <activity android:name="jp.co.c2inc.licensecheck.LicenseCheckActivity"
+                      android:launchMode="singleTask">
+
+                <intent-filter>
+                    <action android:name="android.intent.action.MAIN" />
+                    <category android:name="android.intent.category.LAUNCHER" />
+                </intent-filter>
+
+                <intent-filter>
+                    <action android:name="android.intent.action.VIEW" />
+                    <category android:name="android.intent.category.DEFAULT" />
+                    <category android:name="android.intent.category.BROWSABLE" />
+                    <data android:scheme="%PACKAGE_NAME%"/>
+                </intent-filter>
+            </activity>
+            """
+
     MANIFEST_0 += """
         <activity android:name="%ACTIVITY_NAME%"
-                  android:label="%APP_TITLE%"
-                  android:launchMode="singleTask"
-                  android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|touchscreen|smallestScreenSize" """
+          android:label="%APP_TITLE%"
+          android:launchMode="singleTask"
+          android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|touchscreen|smallestScreenSize"
+          """
 
     if options['gearvr']:
         MANIFEST_0 += """
@@ -592,8 +629,10 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
                     <action android:name="android.intent.action.MAIN" />
                     <category android:name="android.intent.category.INFO" />
                 </intent-filter>"""
+    elif options['c2inc']:
+        MANIFEST_0 += """
+            """
     else:
-    #if not override_main_activity:
         MANIFEST_0 += """
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -1002,6 +1041,7 @@ def usage():
     --zirconia          - (optional) include Zirconia permissions
     --mobiroo           - (optional) include mobiroo entries to manifest
     --gearvr            - (optional) include GearVR entries to manifest
+    --c2inc             - (optional) include C2Inc manifest entries
 
     (Ad networks)
     --admob             - (optional) include AdMob activity decl
@@ -1077,6 +1117,7 @@ def main():
         'gamepad': False,
         'banner': None,
         'gearvr': None,
+        'c2inc': None,
         }
 
     def add_meta(kv, meta_map = meta):
@@ -1268,6 +1309,9 @@ def main():
             extras.append('gearvr')
             options['gearvr'] = True
             glEsVersion = "0x00030000"
+        elif "--c2inc" == arg:
+            extras.append('c2inc')
+            options['c2inc'] = True
         elif "--require-gles30" == arg:
             glEsVersion = "0x00030000"
         else:
