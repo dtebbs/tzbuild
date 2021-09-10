@@ -1441,19 +1441,6 @@ def main():
     if 0 != len(png_asset_files):
         copy_png_asset_files(dest, png_asset_files)
 
-    # Run 'android update project -p ... --target android-15 -n <name>
-    # --library ...'
-
-    global wrote
-    if wrote or not os.path.exists(os.path.join(dest, "build.xml")):
-        fullname = "%s-%s" % (name, version)
-        if not 0 == run_android_project_update(dest, fullname, depends,
-                                               android_sdk_root, library,
-                                               options):
-            return 1
-    else:
-        print "No project files changed, not running android project update"
-
     return 0
 
 ############################################################
