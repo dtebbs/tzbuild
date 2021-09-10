@@ -62,7 +62,7 @@ CFLAGSPRE := \
     -ftree-vectorize -msse3 -mssse3
 
 ifeq (clang,$(COMPILER))
-  CFLAGSPRE += -Qunused-arguments -Wno-deprecated-register --stdlib=libc++
+  CFLAGSPRE += -Qunused-arguments -Wno-deprecated-register
 endif
 
 CFLAGSPOST := -c
@@ -86,7 +86,7 @@ else
 endif
 
 CXXFLAGSPRE := \
-  $(CFLAGSPRE) -Wno-overloaded-virtual -std=c++11 -Wno-reorder \
+  $(CFLAGSPRE) -Wno-overloaded-virtual -std=c++17 -Wno-reorder \
   -DXP_LINUX=1 -DXP_UNIX=1 -DMOZILLA_STRICT_API
 CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions -fpermissive
 
