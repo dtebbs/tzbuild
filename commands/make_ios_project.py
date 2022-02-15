@@ -13,7 +13,7 @@ relpath = os.path.relpath
 ##################################################################
 
 def _verbose(msg):
-    print "%s" % msg
+    print( "%s" % msg )
 def _silent(msg):
     pass
 verbose = _verbose #_silent
@@ -33,8 +33,8 @@ def write_file_if_different(filename, data):
         old_data = f.read()
         f.close()
         if old_data == data:
-            print "File '%s' has not changed.  Not writing" \
-                % os.path.basename(filename)
+            print( "File '%s' has not changed.  Not writing" \
+                % os.path.basename(filename) )
             return
 
     with open(filename, 'wb') as f:
@@ -229,7 +229,7 @@ def copy_resources(config):
             #            "icon_512x512.png", "icon_512x512@2x.png" ]:
             #     f = join(config['icons-base'], i)
             #     if os.path.exists(f):
-            #         print "Copying icon '%s'" % i
+            #         print( "Copying icon '%s'" % i )
             #         copy_file_if_different(f, join(project_icons_dir, i))
 
             # plist_data = plist_set_bundle_icon(plist_data, 'icons')
@@ -289,7 +289,7 @@ def write_gyp_file(gyp_file_name, config):
 
 def usage():
 
-    print """
+    print( """
   Usage:
 
     make_ios_project --app-name <app-name> --dest-dir <dest-dir> [<options>]
@@ -338,7 +338,7 @@ def usage():
         Best to leave this as the default, unless you need some heavy
         customization.
 
-"""
+""" )
 
 def make_ios_project():
 
@@ -382,7 +382,7 @@ def make_ios_project():
         elif "--strip-url-handlers" == a:
             config['strip-url-handling'] = True
         else:
-            print "ERROR: unrecognised option: %s" % a
+            print( "ERROR: unrecognised option: %s" % a )
             usage()
             return 1
 
@@ -392,11 +392,11 @@ def make_ios_project():
     # Sanity check args
 
     if not config['appname']:
-        print "ERROR: no --app-name flag given"
+        print( "ERROR: no --app-name flag given" )
         usage()
         return 1
     if not config['destdir']:
-        print "ERROR: no --dest-dir flag given"
+        print( "ERROR: no --dest-dir flag given" )
         usage()
         return 1
 
@@ -412,12 +412,12 @@ def make_ios_project():
 
     gyp_file_name = join(config['destdir'], config['appname'] + ".gyp")
     if not write_gyp_file(gyp_file_name, config):
-        print "ERROR: failed to write gyp file: %s" % gyp_file_name
+        print( "ERROR: failed to write gyp file: %s" % gyp_file_name )
         return 1
 
-    print " written .gyp file: %s" % gyp_file_name
-    print " build with: gyp --depth \"%s\" \"%s\"" % \
-        (os.path.split(gyp_file_name)[0], gyp_file_name)
+    print( " written .gyp file: %s" % gyp_file_name )
+    print( " build with: gyp --depth \"%s\" \"%s\"" % \
+        (os.path.split(gyp_file_name)[0], gyp_file_name) )
     return 0
 
 

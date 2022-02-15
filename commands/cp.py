@@ -8,17 +8,17 @@ import stat
 from os.path import exists
 
 def _verbose(msg):
-    print msg
+    print( msg )
 def _verbose_dummy(msg):
     pass
 
 def usage():
-    print """
+    print( """
 Usage:
 
     cp [--timestamp|-v] src0 src1 ... srcN dst
 
-"""
+""" )
 
 def _check_timestamp(src, dst):
     global verbose
@@ -71,12 +71,12 @@ def main():
                 if not _check_timestamp(src, dest):
                     continue
             if not exists(src):
-                print "Cannot find file: %s" % src
+                print( "Cannot find file: %s" % src )
                 return 1
             shutil.copy(src, dest)
 
     if 0 == len(all_files):
-        print "ERROR: no files found"
+        print( "ERROR: no files found" )
         return 1
 
     return 0

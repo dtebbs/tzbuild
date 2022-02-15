@@ -360,7 +360,7 @@ C2INC_PERMISSIONS = \
 #
 #
 def _verbose(msg):
-    print "%s" % msg
+    print( "%s" % msg )
 def _silent(msg):
     pass
 verbose = _silent
@@ -391,8 +391,8 @@ def write_file_if_different(filename, data):
         old_data = f.read()
         f.close()
         if old_data == data:
-            print "File '%s' has not changed.  Not writing" \
-                % os.path.basename(filename)
+            print( "File '%s' has not changed.  Not writing" \
+                % os.path.basename(filename) )
             return
 
     with open(filename, 'wb') as f:
@@ -831,7 +831,7 @@ def copy_drawable_files_with_name(dest, root_dir, filename):
     for i in types:
         src = os.path.join(root_dir, "drawable-%s" % i, filename)
         if not os.path.exists(src):
-            print "ERROR: Failed to find '%s'" % src
+            print( "ERROR: Failed to find '%s'" % src )
             exit(1)
         src_dest[src] = os.path.join(dest, "res", "drawable-%s" % i)
     for i in optional_types:
@@ -945,7 +945,7 @@ def run_android_project_update(dest, name, dependencies, sdk_root, library,
 
 def usage():
 
-    print """
+    print( """
   Usage:
 
     make_android_project --dest <dest>
@@ -1060,7 +1060,7 @@ def usage():
 
     make_android_project --dest java --version 3.2.5 --target 'android-15' --name 'myproj' --title 'MyProject' --package com.company.project.app --sdk-version 8 --activity MyProjectActivity
 
-"""
+""" )
 
 def main():
 
@@ -1123,12 +1123,12 @@ def main():
     def add_meta(kv, meta_map = meta):
         colon_idx = kv.find(':')
         if -1 == colon_idx:
-            print "Badly formed meta data: %s" % kv
+            print( "Badly formed meta data: %s" % kv )
             usage()
             exit(1)
         k = kv[:colon_idx]
         v = kv[colon_idx+1:]
-        print "Saw meta data: KEY: %s, VALUE: %s" % (k, v)
+        print( "Saw meta data: KEY: %s, VALUE: %s" % (k, v) )
         meta_map[k] = v
 
     def add_app_meta(kv):
@@ -1137,7 +1137,7 @@ def main():
     def add_launcher_activity(ai):
         parts = ai.split(',')
         if 2 > len(parts):
-            print "Badly formated launcher activity: %s" % ai
+            print( "Badly formated launcher activity: %s" % ai )
             usage()
             exit(1)
 
@@ -1155,7 +1155,7 @@ def main():
     def add_activity_code(ac):
         options['activity_extra_code'] += ac
 
-    print sys.argv[1:]
+    print( sys.argv[1:] )
 
     while len(args):
         arg = args.pop(0)
@@ -1315,8 +1315,8 @@ def main():
         elif "--require-gles30" == arg:
             glEsVersion = "0x00030000"
         else:
-            print "Error: unknown parameter: '%s'" % arg
-            print ""
+            print( "Error: unknown parameter: '%s'" % arg )
+            print( "" )
             usage()
             exit(1)
 
@@ -1324,10 +1324,10 @@ def main():
 
     err = False
     if dest is None:
-        print "Error: no destination specified"
+        print( "Error: no destination specified" )
         err = True
     if version is None:
-        print "Error: no version specified"
+        print( "Error: no version specified" )
         err = True
 
     if err:
@@ -1338,8 +1338,8 @@ def main():
 
     version_int_list = [ int(i) for i in version.split('.') ]
     if len(version_int_list) < 3:
-        print "Error: version string should be of the form: X.Y.Z[.W]"
-        print ""
+        print( "Error: version string should be of the form: X.Y.Z[.W]" )
+        print( "" )
         usage()
         exit(1)
     while len(version_int_list) < 4:
@@ -1376,8 +1376,8 @@ def main():
     # Dir
 
     if not os.path.exists(dest):
-        print "Error: destination directory '%s' does not exist" % dest
-        print ""
+        print( "Error: destination directory '%s' does not exist" % dest )
+        print( "" )
         usage()
         exit(1)
 

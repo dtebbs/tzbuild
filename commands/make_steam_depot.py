@@ -10,7 +10,7 @@ def _ensure_executable(f):
     if "darwin" == sys.platform or sys.platform.startswith("linux"):
         s = os.stat(f)
         if 0 == (s.st_mode & stat.S_IXUSR):
-            print "ensure_executable: %s" % f
+            print( "ensure_executable: %s" % f )
             os.chmod(f, s.st_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
 
 def _steam_cmd(steam_sdk_path):
@@ -42,7 +42,7 @@ def _steam_contentprep(steam_sdk_path):
     prep_path = join(tools_root, 'ContentPrep.app', 'Contents', 'MacOS',
                      'contentprep.py')
     if not exists(prep_path):
-        print "Expanding ContentPrep tool ..."
+        print( "Expanding ContentPrep tool ..." )
         if 0 != subprocess.call("unzip ContentPrep.zip",
                                 cwd=tools_root, shell=True):
             raise Exception("failed to unzip ContentPrep tool")
@@ -133,21 +133,21 @@ def steam_build_depot(app_id, depot_id, build_path, source_base,
        build_path, abspath(source_base), \
        depot_id, relpath(depot_config_file, build_path)))
 
-    print ""
-    print " Steam build files:"
-    print "  %s" % app_config_file
-    print "  %s" % depot_config_file
-    print ""
+    print( "" )
+    print( " Steam build files:" )
+    print( "  %s" % app_config_file )
+    print( "  %s" % depot_config_file )
+    print( "" )
 
     steam_cmd = _steam_cmd(steam_sdk_path)
 
     cmd = "%s +login %s %s +run_app_build %s +quit" % \
           (steam_cmd, steam_credentials[0], steam_credentials[1],
            app_config_file)
-    print ""
-    print " Steam build command:"
-    print "  %s" % cmd
-    print ""
+    print( "" )
+    print( " Steam build command:" )
+    print( "  %s" % cmd )
+    print( "" )
 
     if skip_build:
         return 0
@@ -217,27 +217,27 @@ def run(args):
             return 1
 
     if app_id is None:
-        print "app_id not specified"
+        print( "app_id not specified" )
         _help()
         return 1
     if depot_id is None:
-        print "depot_id not specified"
+        print( "depot_id not specified" )
         _help()
         return 1
     if build_path is None:
-        print "build_path not specified"
+        print( "build_path not specified" )
         _help()
         return 1
     if source_base is None:
-        print "source_base not specified"
+        print( "source_base not specified" )
         _help()
         return 1
     if steam_path is None:
-        print "steam_path not specified"
+        print( "steam_path not specified" )
         _help()
         return 1
     if steam_credentials is None:
-        print "steam_credentials not specified"
+        print( "steam_credentials not specified" )
         _help()
         return 1
 
@@ -253,6 +253,6 @@ def run(args):
                              skip_build)
 
 if "__main__" == __name__:
-    # print "HERE"
+    # print( "HERE" )
     # exit(0)
     exit(run(sys.argv))

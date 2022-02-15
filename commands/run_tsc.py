@@ -17,23 +17,23 @@ def timestamp(filename):
     return s.st_mtime
 
 def help():
-    print " Usage:"
-    print "   run_tsc [options] --out <outfile.js> <infiles> ..."
-    print ""
-    print " Options are as for tsc, including:"
-    print ""
-    print "   -v                  - Write out internal debugging messages"
-    print ""
-    print "   -Werror             - If any errors are output to stderr, behave "
-    print "                         as if compilation failed (exit non-zero and"
-    print "                         remove all output files"
-    print ""
-    print "   -Wnone              - Suppress all warning output"
-    print ""
-    print "   --tsc <tsc path>    - Call tsc with the given path"
-    print ""
-    print "   -filter <pattern>   - Only display warnings matching pattern"
-    print ""
+    print( " Usage:" )
+    print( "   run_tsc [options] --out <outfile.js> <infiles> ..." )
+    print( "" )
+    print( " Options are as for tsc, including:" )
+    print( "" )
+    print( "   -v                  - Write out internal debugging messages" )
+    print( "" )
+    print( "   -Werror             - If any errors are output to stderr, behave " )
+    print( "                         as if compilation failed (exit non-zero and" )
+    print( "                         remove all output files" )
+    print( "" )
+    print( "   -Wnone              - Suppress all warning output" )
+    print( "" )
+    print( "   --tsc <tsc path>    - Call tsc with the given path" )
+    print( "" )
+    print( "   -filter <pattern>   - Only display warnings matching pattern" )
+    print( "" )
 
 def main():
 
@@ -71,7 +71,7 @@ def main():
             tsc_args.append(a)
 
     if outfile is None:
-        print "run_tsc tool requires explicit output file"
+        print( "run_tsc tool requires explicit output file" )
         return 3
 
     # Allow output to stdout
@@ -109,7 +109,7 @@ def main():
     p = subprocess.Popen(tsc_cmd, shell=True, stderr=subprocess.PIPE)
     (_, err) = p.communicate()
 
-    # Print (re-format) warnings if asked to
+    # Print (re-format) warnings if asked to )
 
     def output_warnings(err):
         error_re = re.compile("^(.+)\(([0-9]+)\,([0-9]+)\)\: (.+)$")
@@ -122,7 +122,7 @@ def main():
             if total_lines > 16:
                 break
 
-            # print "ERR LINE: %s" % line
+            # print( "ERR LINE: %s" % line )
             m = error_re.match(line)
             if not m is None:
                 filename = m.group(1)

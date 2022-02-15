@@ -16,7 +16,7 @@ args.pop(0)
 
 while len(args):
     d = args.pop(0)
-    #print d
+    #print( d )
 
     def delete():
         if os.path.exists(d):
