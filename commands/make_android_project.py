@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/python3
 # Copyright 2013 oyatsukai.com
 
 import sys
@@ -395,8 +395,13 @@ def write_file_if_different(filename, data):
                 % os.path.basename(filename) )
             return
 
-    with open(filename, 'wb') as f:
-        f.write(data)
+    # NOTE: need to differentiate to avoid exception on write
+    if isinstance(data, str):
+        with open(filename, 'w') as f:
+            f.write(data)
+    else:
+        with open(filename, 'wb') as f:
+            f.write(data)
 
     global wrote
     wrote = True
@@ -517,7 +522,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
         replace_tags("""<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">%APP_TITLE%</string>""", table)
-    for k, v in resource_strings.iteritems():
+    for k, v in resource_strings.items():
         res_values_strings_data += '\n    <string name="%s">%s</string>' \
             % (k, v)
     res_values_strings_data += """

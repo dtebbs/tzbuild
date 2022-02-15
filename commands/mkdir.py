@@ -30,7 +30,7 @@ def mkdir():
 
             try:
                 makedirs(d)
-            except OSError, e:
+            except OSError as e:
                 # Directory may have already been created after the check
                 # above
                 pass

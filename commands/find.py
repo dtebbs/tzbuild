@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/python3
 # Copyright (c) 2013 Turbulenz Limited.
 # Released under "Modified BSD License".  See COPYING for full text.
 
