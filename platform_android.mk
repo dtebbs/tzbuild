@@ -3,31 +3,8 @@
 
 ############################################################
 
-# /Users/dtebbs/turbulenz/external/android/android-ndk-r9b/toolchains/llvm-3.3/prebuilt/darwin-x86_64/bin/clang
-# -MMD -MP -MF ./obj/local/armeabi/objs-debug/hello-jni/hello-jni.o.d
-# -gcc-toolchain /Users/dtebbs/turbulenz/external/android/android-ndk-r9b/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64
-# -fpic -ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
-# -target armv5te-none-linux-androideabi
-# -march=armv5te
-# -mtune=xscale
-# -msoft-float
-# -mthumb
-# -marm
-# -Os -g -DNDEBUG -fomit-frame-pointer -fno-strict-aliasing
-# -O0 -UNDEBUG
-# -fno-omit-frame-pointer -Ijni
-# -DANDROID
-# -Wa,--noexecstack -Wformat -Werror=format-security
-# -I/Users/dtebbs/turbulenz/external/android/android-ndk-r9b/platforms/android-3/arch-arm/usr/include -c  jni/hello-jni.c -o ./obj/local/armeabi/objs-debug/hello-jni/hello-jni.o
-
-# /Users/dtebbs/turbulenz/external/android/android-ndk-r9b/toolchains/llvm-3.3/prebuilt/darwin-x86_64/bin/clang
-# -MMD -MP -MF ./obj/local/armeabi-v7a/objs/helloneon/helloneon.o.d
-# hains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64
-# -fpic -ffunction-sections -funwind-tables -fstack-protector -no-canonical-prefixes
-# -gcc-toolchain /Users/dtebbs/turbulenz/external/android/android-ndk-r9b/toolc
-# -target armv7-none-linux-androideabi -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb
-# -Os -g -DNDEBUG -fomit-frame-pointer -fno-strict-aliasing
-# -I/Users/dtebbs/turbulenz/external/android/android-ndk-r9b/sources//android/cpufeatures -Ijni -DANDROID -DHAVE_NEON=1 -Wa,--noexecstack -Wformat -Werror=format-security    -I/Users/dtebbs/turbulenz/external/android/android-ndk-r9b/platforms/android-4/arch-arm/usr/include -c  jni/helloneon.c -o ./obj/local/armeabi-v7a/objs/helloneon/helloneon.o
+$(info ____)
+$(info ** Building for Android ARCH:$(ARCH))
 
 ############################################################
 # Util Functions
@@ -35,11 +12,9 @@
 
 # 1 - tzbuild arch (armv7a, x86, etc)
 _android_arch_name = $(strip                   \
-  $(if $(filter armv5,$(1)),armeabi,           \
-    $(if $(filter armv7a,$(1)),armeabi-v7a,    \
-      $(if $(filter arm64,$(1)),arm64-v8a,     \
-        $(1)                                   \
-      )                                        \
+  $(if $(filter armv7a,$(1)),armeabi-v7a,      \
+    $(if $(filter arm64,$(1)),arm64-v8a,       \
+      $(1)                                     \
     )                                          \
   ))
 
@@ -64,63 +39,9 @@ ANDROID_SDK ?= $(ANDROID_SDK_PATH)/android-sdk-$(android_build_host)
 # NDK dir
 
 ANDROID_NDK ?= $(ANDROID_SDK_PATH)/android-ndk-r9d
-NDK_PLATFORM ?= android-9
-NDK_GCC_VER ?= 4.8
 NDK_CLANG_VER ?= 3.4
-# NDK_HOSTOS ?= darwin
 NDK_HOSTARCH ?= x86_64
 NDK_STLPORT ?= 0
-NDK_LIBCPP ?= 0
-NDK_HAS_CLANGVER_IN_TOOLCHAIN_PATH ?= 0
-NDK_HAS_UNIFIED_INCLUDES ?= 0
-
-# Toolset for which arch
-
-ANDROID_ARCH_NAME := $(call _android_arch_name,$(ARCH))
-
-ifeq ($(ARCH),armv5)
-  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
-  NDK_ARCHNAME := arm-linux-androideabi
-  NDK_PLATFORMDIR = \
-    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm
-endif
-ifeq ($(ARCH),armv7a)
-  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/arm-linux-androideabi-$(NDK_GCC_VER)
-  NDK_ARCHNAME := arm-linux-androideabi
-  NDK_CLANG_FLAGS = -target armv7-none-linux-androideabi
-  NDK_PLATFORMDIR = \
-    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm
-  NDK_USE_CLANG ?= 1
-endif
-ifeq ($(ARCH),arm64)
-  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/aarch64-linux-android-$(NDK_GCC_VER)
-  NDK_ARCHNAME := aarch64-linux-android
-  NDK_CLANG_FLAGS = -target aarch64-linux-android
-  NDK_PLATFORMDIR = \
-    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-arm64
-  NDK_USE_CLANG ?= 1
-endif
-ifeq ($(ARCH),x86)
-  NDK_ARCHDIR := $(ANDROID_NDK)/toolchains/x86-$(NDK_GCC_VER)
-  NDK_ARCHNAME := i686-linux-android
-  NDK_CLANG_FLAGS = -target i686-none-linux-android
-  NDK_PLATFORMDIR = \
-    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-x86
-  NDK_USE_CLANG ?= 1
-endif
-ifeq ($(ARCH),x86_64)
-  NDK_ARCHDIR = $(ANDROID_NDK)/toolchains/x86_64-$(NDK_GCC_VER)
-  NDK_ARCHNAME := x86_64-linux-android
-  NDK_CLANG_FLAGS = -target x86_64-none-linux-android
-  NDK_PLATFORMDIR = \
-    $(ANDROID_NDK)/platforms/$(NDK_PLATFORM)/arch-x86_64
-  NDK_USE_CLANG ?= 1
-endif
-ifeq ($(NDK_ARCHDIR),)
-  $(error Couldnt determine toolchain for android ARCH $(ARCH))
-endif
-
-NDK_TOOLPREFIX := $(NDK_ARCHNAME)-
 
 # Find toolset for this platfom
 
@@ -137,68 +58,80 @@ ifeq ($(NDK_HOSTOS),)
   $(error Couldnt find toolchain for BUILDHOST $(BUILDHOST))
 endif
 
-NDK_TOOLCHAIN = $(NDK_ARCHDIR)/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
-NDK_TOOLBIN = $(NDK_TOOLCHAIN)/bin
-
-ifeq (0,$(NDK_HAS_CLANGVER_IN_TOOLCHAIN_PATH))
-  NDK_CLANG_TOOLCHAIN = \
-   $(ANDROID_NDK)/toolchains/llvm/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
-else
-  NDK_CLANG_TOOLCHAIN = \
-   $(ANDROID_NDK)/toolchains/llvm-$(NDK_CLANG_VER)/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
+# Common toolchain path for all architectures
+NDK_TOOLCHAIN := $(ANDROID_NDK)/toolchains/llvm/prebuilt/$(NDK_HOSTOS)-$(NDK_HOSTARCH)
+NDK_SYSROOT := $(NDK_TOOLCHAIN)/sysroot
+SYSROOT := $(NDK_SYSROOT)
+# Check that the new dirs exist
+ifeq ($(wildcard $(NDK_SYSROOT)/.*),)
+  $(error NDK_SYSROOT does not exist: $(NDK_SYSROOT))
 endif
+$(info ** NDK_SYSROOT: $(NDK_SYSROOT))
 
-NDK_CLANG_TOOLBIN = $(NDK_CLANG_TOOLCHAIN)/bin
+ifeq ($(ARCH),armv7a)
+    NDK_ARCHNAME := armeabi-v7a
+    NDK_TRIPLE := armv7-linux-androideabi
+    NDK_FLAGS := -target $(NDK_TRIPLE) -march=armv7-a -mfloat-abi=softfp -mfpu=vfp
+    NDK_ARCH_DIR := arm-linux-androideabi
+else ifeq ($(ARCH),arm64)
+    NDK_ARCHNAME := arm64-v8a
+    NDK_TRIPLE := aarch64-linux-android
+    NDK_FLAGS := -target $(NDK_TRIPLE) -march=armv8-a
+    NDK_ARCH_DIR := aarch64-linux-android
+else
+    $(error "Unsupported architecture: $(ARCH)")
+endif
+NDK_LIBDIR := $(NDK_SYSROOT)/usr/lib/$(NDK_ARCH_DIR)
+ifeq ($(wildcard $(NDK_LIBDIR)/.*),)
+  $(error NDK_LIBDIR does not exist: $(NDK_LIBDIR))
+endif
+$(info ** NDK_ARCHNAME: $(NDK_ARCHNAME))
+$(info ** NDK_TRIPLE: $(NDK_TRIPLE))
+$(info ** NDK_FLAGS: $(NDK_FLAGS))
+$(info ** NDK_LIBDIR: $(NDK_LIBDIR))
 
-NDK_CLANG_FLAGS += -gcc-toolchain $(NDK_TOOLCHAIN) -no-canonical-prefixes
+# Toolset for which arch
+
+ANDROID_ARCH_NAME := $(call _android_arch_name,$(ARCH))
+$(info ** ANDROID_ARCH_NAME: $(ANDROID_ARCH_NAME))
+
+NDK_TOOLBIN = $(NDK_TOOLCHAIN)/bin
+NDK_TOOLPREFIX := $(NDK_ARCHNAME)-
+$(info ** NDK_TOOLBIN: $(NDK_TOOLBIN))
+$(info ** NDK_TOOLPREFIX: $(NDK_TOOLPREFIX))
+
+# Compiler setup
+CC := $(NDK_TOOLBIN)/clang
+CXX := $(NDK_TOOLBIN)/clang++
+AR := $(NDK_TOOLBIN)/llvm-ar
 
 # Some include paths
 
-NDK_GNUSTL_DIR = $(ANDROID_NDK)/sources/cxx-stl/gnu-libstdc++/$(NDK_GCC_VER)
-NDK_GNUSTL_LIBS = \
-  $(NDK_GNUSTL_DIR)/libs/$(ANDROID_ARCH_NAME)/libgnustl_static.a
-NDK_GNUSTL_INCLUDES = $(NDK_GNUSTL_DIR)/include \
-  $(NDK_GNUSTL_DIR)/libs/$(ANDROID_ARCH_NAME)/include
+NDK_LIBCPP_DIR = $(SYSROOT)/usr
+NDK_LIBCPP_LIBS = $(NDK_LIBDIR)/libc++_static.a \
+                  $(NDK_LIBDIR)/libc++abi.a
 
-NDK_STLPORT_DIR = $(ANDROID_NDK)/sources/cxx-stl/stlport
-NDK_STLPORT_LIBS += \
-  $(NDK_STLPORT_DIR)/libs/$(ANDROID_ARCH_NAME)/libstlport_static.a
-NDK_STLPORT_INCLUDES = $(NDK_STLPORT_DIR)/stlport
+# NDK_LIBCPP_INCLUDES = $(NDK_LIBCPP_DIR)/libcxx/include
+NDK_LIBCPP_INCLUDES = \
+     $(NDK_LIBCPP_DIR)/include \
+     $(NDK_LIBCPP_DIR)/include/$(NDK_ARCHNAME) \
+     $(NDK_LIBCPP_DIR)/include/c++/v1
 
-NDK_LIBCPP_DIR = $(ANDROID_NDK)/sources/cxx-stl/llvm-libc++
-NDK_LIBCPP_LIBS = $(NDK_LIBCPP_DIR)/libs/$(ANDROID_ARCH_NAME)/libc++_static.a \
-				  $(NDK_LIBCPP_DIR)/libs/$(ANDROID_ARCH_NAME)/libc++abi.a
+NDK_STL_DIR = $(NDK_LIBCPP_DIR)
+NDK_STL_LIBS = $(NDK_LIBCPP_LIBS)
 
-#NDK_LIBCPP_INCLUDES = $(NDK_LIBCPP_DIR)/libcxx/include
-NDK_LIBCPP_INCLUDES = $(NDK_LIBCPP_DIR)/include
+# Add NDK C++ standard library includes
+NDK_STL_INCLUDES := \
+    $(NDK_LIBCPP_INCLUDES) \
+    $(ANDROID_NDK)/sources/cxx-stl/system/include \
+    $(SYSROOT)/usr/include
 
-ifeq (1,$(NDK_LIBCPP))
-  NDK_STL_DIR = $(NDK_LIBCPP_DIR)
-  NDK_STL_LIBS = $(NDK_LIBCPP_LIBS)
-  NDK_STL_INCLUDES = $(NDK_LIBCPP_INCLUDES)
-else
-  ifeq (1,$(NDK_STLPORT))
-    NDK_STL_DIR = $(NDK_STLPORT_DIR)
-    NDK_STL_LIBS = $(NDK_STLPORT_LIBS)
-    NDK_STL_INCLUDES = $(NDK_STLPORT_INCLUDES)
-  else
-    NDK_STL_DIR = $(NDK_GNUSTL_DIR)
-    NDK_STL_LIBS = $(NDK_GNUSTL_LIBS)
-    NDK_STL_INCLUDES = $(NDK_GNUSTL_INCLUDES)
-  endif
-endif
 
-ifeq (1,$(NDK_HAS_UNIFIED_INCLUDES))
-  NDK_PLATFORM_INCLUDES = \
+NDK_PLATFORM_INCLUDES = \
     $(ANDROID_NDK)/sources/android/native_app_glue \
     $(ANDROID_NDK)/sysroot/usr/include
 
-  NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/$(NDK_ARCHNAME)
-else
-  NDK_PLATFORM_INCLUDES = \
-    $(ANDROID_NDK)/sources/android/native_app_glue \
-    $(NDK_PLATFORMDIR)/usr/include
-endif
+NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/$(NDK_ARCHNAME)
 
 # Set the variant to include the arch
 
@@ -210,66 +143,8 @@ VARIANT:=$(strip $(VARIANT)-$(ARCH))
 # CXX
 #
 
-# From NDK_BUILD:
-#
-# /Users/dtebbs/turbulenz/external/android/android-ndk-r8/toolchains/arm-linux-androideabi-4.4.3/prebuilt/darwin-x86/bin/arm-linux-androideabi-g++
-# -MMD -MP -MF
-# /Users/dtebbs/turbulenz/build/android/obj/local/armeabi-v7a/objs/turbulenz/__/__/__/src/engine/android/androideventhandler.o.d
-# -fpic -ffunction-sections -funwind-tables -fstack-protector
-# -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__
-# -Wno-psabi
-# -march=armv7-a -mfloat-abi=softfp -mfpu=vfp
-# -fno-exceptions -fno-rtti -mthumb -Os -fomit-frame-pointer
-# -fno-strict-aliasing -finline-limit=64
-# -I../../../src/core ...
-#  -I/Users/dtebbs/turbulenz/build/android/jni
-# -DANDROID -DTZ_USE_V8 -DTZ_ANDROID -DTZ_STANDALONE -DFASTCALL=
-# -DTZ_NO_TRACK_REFERENCES -finline-limit=256
-# -O3 -Wa,--noexecstack   -O2
-# -DNDEBUG -g
-# -fexceptions
-# -I/Users/dtebbs/turbulenz/external/android/android-ndk-r8/sources/cxx-stl/gnu-libstdc++/include
-# -I/Users/dtebbs/turbulenz/external/android/android-ndk-r8/sources/cxx-stl/gnu-libstdc++/libs/armeabi-v7a/include
-# -I/Users/dtebbs/turbulenz/external/android/android-ndk-r8/platforms/android-9/arch-arm/usr/include
-# -c  /Users/dtebbs/turbulenz/build/android/jni/../../../src/engine/android/androideventhandler.cpp
-# -o /Users/dtebbs/turbulenz/build/android/obj/local/armeabi-v7a/objs/turbulenz/__/__/__/src/engine/android/androideventhandler.o
-#
-# x86, release
-# /Users/dtebbs/turbulenz/external/android/android-ndk-r8/toolchains/x86-4.4.3/prebuilt/darwin-x86/bin/i686-android-linux-g++
-# -MMD -MP -MF <deps>
-# -ffunction-sections -funwind-tables -fno-exceptions -fno-rtti -O2
-# -fomit-frame-pointer -fstrict-aliasing -funswitch-loops -finline-limit=300
-# -I<includes>
-# -DANDROID -DTZ_USE_V8 -DTZ_ANDROID -DTZ_STANDALONE -DFASTCALL=
-# -DTZ_NO_TRACK_REFERENCES
-# -finline-limit=256 -O3 -Wa,--noexecstack   -O2 -DNDEBUG -g -fexceptions
-# -I<includes>
-# -c <cpp>
-# -o <out>
-#
-# x86, debug
-# /Users/dtebbs/turbulenz/external/android/android-ndk-r8/toolchains/x86-4.4.3/prebuilt/darwin-x86/bin/i686-android-linux-g++
-# -MMD -MP -MF <deps>
-# -ffunction-sections -funwind-tables [-fno-exceptions] -fno-rtti -O2
-# -fomit-frame-pointer -fstrict-aliasing -funswitch-loops -finline-limit=300
-# -I<includes>
-# -DANDROID -DTZ_USE_V8 -DTZ_ANDROID -DTZ_STANDALONE -DFASTCALL=
-# -DTZ_NO_TRACK_REFERENCES
-# -finline-limit=256 -O3 -Wa,--noexecstack   -O0 -g -fexceptions
-# -I<includes>
-# -c <cpp>
-# -o <out>
-
-# Don't use := for compiler, since the external_path location, and
-# hence android NDK, may not be known yet.
-
-ifeq (1,$(NDK_USE_CLANG))
-  CC = $(NDK_CLANG_TOOLBIN)/clang++
-  CFLAGSPOST += $(NDK_CLANG_FLAGS)
-else
-  CC = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)g++
-  CFLAGSPRE += -funswitch-loops -finline-limit=256 -Wno-psabi
-endif
+CC = $(NDK_TOOLBIN)/clang++
+CFLAGSPOST += $(NDK_FLAGS)
 
 CXX = $(CC)
 
@@ -281,18 +156,8 @@ CFLAGSPRE += \
 
 # -fstack-protector
 
-ifeq ($(ARCH),armv5)
-  CFLAGSPRE += \
-    -fpic \
-    -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ \
-    -mthumb -march=armv5te -mtune=xscale -msoft-float
-endif
-
 ifeq ($(ARCH),armv7a)
-  CFLAGSPRE += \
-    -fpic \
-    -D__ARM_ARCH_5__ -D__ARM_ARCH_5T__ -D__ARM_ARCH_5E__ -D__ARM_ARCH_5TE__ \
-    -mthumb
+  CFLAGSPRE += -fpic -mthumb
 
   ifeq ($(TEGRA3),1)
     CFLAGSPRE += -mfpu=neon -mcpu=cortex-a9 -mfloat-abi=softfp
@@ -305,17 +170,16 @@ ifeq ($(ARCH),x86)
   CFLAGSPRE += -Wa,--noexecstack
 endif
 
-CFLAGSPOST += \
- $(addprefix -I,$(NDK_PLATFORM_INCLUDES)) \
- -DFASTCALL= -Wa,--noexecstack
+#CFLAGSPOST += \
+# $(addprefix -I,$(NDK_PLATFORM_INCLUDES)) \
+# -DFASTCALL= -Wa,--noexecstack
 
-ifeq (1,$(NDK_HAS_UNIFIED_INCLUDES))
- CFLAGSPOST += \
-  --sysroot=$(ANDROID_NDK)/sysroot \
-  -I$(ANDROID_NDK)/sysroot/usr/include \
-  -isystem $(NDK_ISYSTEM) \
-  -D__ANDROID_API__=$(ANDROID_SDK_TARGET_NUM)
-endif
+CFLAGSPOST += \
+ -v \
+ --sysroot=$(SYSROOT) \
+ -I$(SYSROOT)/usr/include \
+ -isystem $(NDK_ISYSTEM) \
+ -D__ANDROID_API__=$(ANDROID_SDK_TARGET_NUM)
 
 ifeq ($(CONFIG),debug)
   CFLAGSPOST += -DDEBUG -D_DEBUG
@@ -327,15 +191,6 @@ endif
 ifeq ($(C_OPTIMIZE),1)
   CFLAGSPOST += -g -O3 -ffast-math -ftree-vectorize
   # CFLAGSPOST += -fomit-frame-pointer
-
-  # WORKAROUND: gcc 4.8 targeting x86
-  ifeq (4.8,$(NDK_GCC_VER))
-    ifeq (x86,$(ARCH))
-      ifneq (1,$(NDK_USE_CLANG))
-        CFLAGSPOST += -fno-tree-vectorize
-      endif
-    endif
-  endif
 else
   CFLAGSPOST += -O0
 endif
@@ -345,12 +200,12 @@ ifeq ($(C_SYMBOLS),1)
 endif
 
 dll-post = \
-  $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)strip --strip-unneeded \
+  $(NDK_TOOLBIN)/llvm-strip --strip-unneeded \
   $($(1)_dllfile)
 CFLAGSPOST += -c
 
 CXXFLAGSPRE := $(CFLAGSPRE) -std=c++11 -Wno-reorder -fno-rtti
-CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions $(addprefix -I,$(NDK_STL_INCLUDES))
+CXXFLAGSPOST := $(CFLAGSPOST) -fexceptions $(addprefix -I,$(NDK_LIBCPP_INCLUDES))
 
 CFLAGSPOST += -x c -std=gnu11
 
@@ -360,7 +215,8 @@ PCHFLAGS := -x c++-header
 # AR
 #
 
-AR = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)ar
+AR = $(NDK_TOOLBIN)/llvm-ar
+$(info ** AR command path: $(AR))
 
 ARFLAGSPRE := cr
 arout :=
@@ -387,46 +243,38 @@ READELF = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)readelf
 # DLLS
 #
 
-# From ndk-build:
-# /Users/dtebbs/turbulenz/external/android/android-ndk-r8/toolchains/arm-linux-androideabi-4.4.3/prebuilt/darwin-x86/bin/arm-linux-androideabi-g++
-# -Wl,-soname,libturbulenz.so -shared
-# --sysroot=/Users/dtebbs/turbulenz/external/android/android-ndk-r8/platforms/android-9/arch-arm
-# <objects>
-# <libs>
-# -Wl,--fix-cortex-a8  -Wl,--no-undefined -Wl,-z,noexecstack -L/Users/dtebbs/turbulenz/external/android/android-ndk-r8/platforms/android-9/arch-arm/usr/lib -llog -landroid -lEGL -lGLESv2 -ldl -llog -lc -lm -o /Users/dtebbs/turbulenz/build/android/obj/local/armeabi-v7a/libturbulenz.so
+DLL = $(NDK_TOOLBIN)/clang++
+DLLFLAGSPOST += $(NDK_FLAGS)
 
-# From ndk-build:
-# /Users/dtebbs/turbulenz/external/android/android-ndk-r9b/toolchains/llvm-3.3/prebuilt/darwin-x86_64/bin/clang++
-# -Wl,-soname,libhelloneon.so -shared
-# --sysroot=/Users/dtebbs/turbulenz/external/android/android-ndk-r9b/platforms/android-4/arch-arm
-# ./obj/local/armeabi-v7a/objs/helloneon/helloneon.o ./obj/local/armeabi-v7a/objs/helloneon/helloneon-intrinsics.o ./obj/local/armeabi-v7a/libcpufeatures.a
-# -lgcc
-# -gcc-toolchain /Users/dtebbs/turbulenz/external/android/android-ndk-r9b/toolchains/arm-linux-androideabi-4.8/prebuilt/darwin-x86_64
-# -no-canonical-prefixes
-# -target armv7-none-linux-androideabi -march=armv7-a -mfloat-abi=softfp -mfpu=vfpv3-d16 -mthumb
-# -Wl,--fix-cortex-a8  -Wl,--no-undefined -Wl,-z,noexecstack -Wl,-z,relro -Wl,-z,now
-# -llog -lc -lm -o ./obj/local/armeabi-v7a/libhelloneon.so
+# Obsolete
+#ARCH_LIB_DIR := $(SYSROOT)/usr/lib/$(NDK_ARCHNAME)/$(ANDROID_SDK_TARGET_NUM)
 
-ifeq (1,$(NDK_USE_CLANG))
-  DLL = $(NDK_CLANG_TOOLBIN)/clang++
-  DLLFLAGSPOST += $(NDK_CLANG_FLAGS)
-else
-  DLL = $(NDK_TOOLBIN)/$(NDK_TOOLPREFIX)gcc
-  DLLFLAGSPOST =
-endif
+$(info ** NDK version: $(shell $(NDK_TOOLBIN)/clang++ --version))
+$(info ** SYSROOT: $(SYSROOT))
+$(info ** NDK_TOOLCHAIN: $(NDK_TOOLCHAIN))
+
+# NOTE: we need the -B path for the linker to find crtbegin_so.o and crtend_so.o .
+#  Apparently it shouldn't be necessary, but this is what it's come down to.
 DLLFLAGSPRE += -shared \
-  --sysroot=$(NDK_PLATFORMDIR) \
-  -nostdlib++
-# -Wl,-soname,$$(notdir $$@)
+  --sysroot=$(SYSROOT) \
+  -L$(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM) \
+  -B$(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM) \
+  -nostdlib++ \
+  -Wl,-soname,$$(notdir $$@)
+# -v  # For verbose
 # -nostdlib
 # -Wl,-shared,-Bsymbolic
 
 DLLFLAGSPOST += \
   $(NDK_STL_LIBS) \
   -Wl,--no-undefined -Wl,-z,noexecstack \
-  -L$(NDK_PLATFORMDIR)/usr/lib \
   -ldl -llog -lc -lm
+# Was: -L$(SYSROOT)/usr/lib
 # -landroid -lEGL -lGLESv2
+
+# NOTE: Doesn't help since the linker includes these itself without a path
+#DLLFLAGSPOST += $(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM)/crtbegin_so.o
+#DLLFLAGSPOST += $(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM)/crtend_so.o
 
 ifeq ($(ARCH),armv7a)
   DLLFLAGSPOST += \
@@ -454,3 +302,9 @@ LDFLAGSPOST = $(DLLFLAGSPOST)
 LDFLAGS_LIBDIR = $(DLLFLAGS_LIBDIR)
 LDFLAGS_LIB = $(DLLFLAGS_LIB)
 binsuffix = $(dllsuffix)
+
+$(info ** CFLAGSPRE: $(CFLAGSPRE))
+$(info ** CFLAGSPOST: $(CFLAGSPOST))
+$(info ** LDFLAGSPRE: $(LDFLAGSPRE))
+$(info ** LDFLAGSPOST: $(LDFLAGSPOST))
+

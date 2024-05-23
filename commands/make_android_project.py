@@ -546,7 +546,6 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     MANIFEST_0 = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
-          package="%PACKAGE_NAME%"
           android:versionCode="%VERSION_INT%"
           android:versionName="%VERSION_DOT_4%" """
 
@@ -607,6 +606,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
           android:label="%APP_TITLE%"
           android:launchMode="singleTask"
           android:configChanges="orientation|screenSize|keyboard|keyboardHidden|navigation|uiMode|touchscreen|smallestScreenSize"
+          android:exported="true"
           """
 
     if options['gearvr']:
@@ -726,7 +726,7 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     <uses-feature android:glEsVersion="%GLES_VERSION%" />
     <!-- SCREEN END -->
 
-    <uses-sdk android:minSdkVersion="%ANDROID_MIN_SDK_VERSION%" android:targetSdkVersion="%ANDROID_TARGET_SDK_VERSION%" />"""
+    """
 
     if options['gamepad']:
         MANIFEST_2 += """

@@ -38,14 +38,14 @@ ifeq (auto,$(XCODE_SDK_VER))
   $(warning Using auto-detected SDK version: $(XCODE_SDK_VER))
 endif
 
-XCODE_SDK_VER ?= 10.11
+XCODE_SDK_VER ?= 14.4
 
 # Minimum OS version to target
 XCODE_MIN_OS_VER ?= 10.9
 # $(XCODE_SDK_VER)
 
 # Mark builds that are linked against the non-default SDKs
-# ifneq ($(XCODE_SDK_VER),10.11)
+# ifneq ($(XCODE_SDK_VER),13.3)
 #   VARIANT:=$(strip $(VARIANT)-$(XCODE_SDK_VER))
 # endif
 

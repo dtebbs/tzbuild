@@ -133,8 +133,8 @@ endif
 
 ifeq ($(TARGET),android)
   TARGETNAME := android
-  ARCH ?= armv7a
-  COMPILER ?= gcc
+  ARCH ?= arm64
+  COMPILER ?= clang
 endif
 
 ifeq ($(TARGET),linux64)
