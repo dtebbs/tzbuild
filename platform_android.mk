@@ -156,8 +156,9 @@ CFLAGSPRE += \
 
 # -fstack-protector
 
+CFLAGSPRE += -fpic
 ifeq ($(ARCH),armv7a)
-  CFLAGSPRE += -fpic -mthumb
+  CFLAGSPRE += -mthumb
 
   ifeq ($(TEGRA3),1)
     CFLAGSPRE += -mfpu=neon -mcpu=cortex-a9 -mfloat-abi=softfp
@@ -175,11 +176,11 @@ endif
 # -DFASTCALL= -Wa,--noexecstack
 
 CFLAGSPOST += \
- -v \
  --sysroot=$(SYSROOT) \
  -I$(SYSROOT)/usr/include \
  -isystem $(NDK_ISYSTEM) \
  -D__ANDROID_API__=$(ANDROID_SDK_TARGET_NUM)
+# -v  # For verbose
 
 ifeq ($(CONFIG),debug)
   CFLAGSPOST += -DDEBUG -D_DEBUG
