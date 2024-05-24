@@ -1013,14 +1013,12 @@ define _make_apk_rule
   $(1) : $(1)_do_gradle
 
   .PHONY : $(1)_install
-  $(1)_install : $(1)_do_gradle
-	adb install -r -d $($(1)_apk_file)
+  $(1)_install:
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew installGame
 
   .PHONY : $(1)_run
-  $(1)_run_dot:=$(if $(filter com.%,$($(1)_activity)),,.)
-  $(1)_run : $(1)_install
-	adb shell am start -a android.intent.action.MAIN \
-      -n $($(1)_package)/$$($(1)_run_dot)$($(1)_activity)
+  $(1)_run: $(1)_install
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew runGame
 
   .PHONY : $(1)_deploy
   $(1)_deploy : # $(1)
@@ -1222,6 +1220,7 @@ $(foreach mod,$(C_MODULES),$(eval \
 # clean rule
 .PHONY : clean
 clean : $(foreach mod,$(C_MODULES),$(mod)_clean)
+    ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew clean
 
 .PHONY : depclean
 depclean :
