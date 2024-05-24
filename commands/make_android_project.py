@@ -493,7 +493,6 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
         MANIFEST_LIBRARY_0 = """<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           xmlns:tools="http://schemas.android.com/tools"
-          package="%PACKAGE_NAME%"
           android:versionCode="%VERSION_INT%"
           android:versionName="%VERSION_DOT_4%">
     <application android:label="API">
