@@ -991,6 +991,7 @@ define _make_apk_rule
       $(if $($(1)_title),--title "$($(1)_title)")                            \
       $(if $($(1)_activity),--activity $($(1)_activity))                     \
       $(addprefix --permissions ,$($(1)_permissions))                        \
+      $(addprefix --remove-permissions ,$($(1)_remove_permissions))                        \
       $(if $($(1)_icondir),--icon-dir $($(1)_icondir))                       \
       $($(1)_apk_depflags)                                                   \
       $($(1)_flags)

@@ -417,7 +417,7 @@ def copy_file_if_different(src, target):
 #
 #
 #
-def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
+def write_manifest(dest, table, permissions, remove_permissions, intent_filters, meta, app_meta,
                    extras, library, resource_strings, options):
 
     target = options['android-target']
@@ -752,6 +752,11 @@ def write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
     for p in permissions:
         data += MANIFEST_3_PERMISSION_PRE + p + MANIFEST_3_PERMISSION_POST
 
+    # Process remove-permissions
+    remove_permissions = list(set(remove_permissions.split(';')))
+    for p in remove_permissions:
+        data += MANIFEST_3_PERMISSION_PRE + p + '" tools:node="remove" />'
+
     # Footer
 
     MANIFEST_4 = """
@@ -986,6 +991,9 @@ def usage():
     --permissions "<perm1>;<perm2>;.."
                         - (optional) e.g. "com.android.vending.CHECK_LICENSE;
                           android.permission.INTERNET"
+    --remove-permissions "<perm1>;<perm2>;.."
+                        - (optional) e.g. "android.permission.READ_EXTERNAL_STORAGE;
+                          android.permission.WRITE_EXTERNAL_STORAGE"
     --resource-string name,value
                         - (optional) add a string resource to the APK
     --intent-filters <xml file>
@@ -1092,6 +1100,7 @@ def main():
     permissions = \
         "android.permission.WAKE_LOCK" \
         # ";android.permission.WRITE_SETTINGS"
+    remove_permissions = ""
 
     intent_filters = None
     meta = {}
@@ -1197,6 +1206,12 @@ def main():
             options['debug'] = True
         elif "--permissions" == arg:
             permissions += ";" + args.pop(0)
+        elif "--remove-permissions" == arg:
+            a = args.pop(0)
+            if remove_permissions == "":
+                remove_permissions = a
+            else:
+                remove_permissions += ";" + a
         elif "--resource-string" == arg:
             res_kv = args.pop(0).split(",")
             resource_strings[res_kv[0]] = res_kv[1]
@@ -1387,7 +1402,7 @@ def main():
 
     # Write manifest
 
-    write_manifest(dest, table, permissions, intent_filters, meta, app_meta,
+    write_manifest(dest, table, permissions, remove_permissions, intent_filters, meta, app_meta,
                    extras, library, resource_strings, options)
 
     # Write ant.properties (dependencies)
