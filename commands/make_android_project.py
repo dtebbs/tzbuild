@@ -476,6 +476,10 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
     if not table['%ICON_DIR%']:
         icon_attr = ''
     table['%ICON_ATTR%'] = icon_attr
+    icon_round_attr = 'android:roundIcon="@drawable/ic_launcher_round"'
+    if not table['%ICON_DIR%']:
+        icon_round_attr = ''
+    table['%ICON_ROUND_ATTR%'] = icon_round_attr
 
     # Start writing
 
@@ -553,7 +557,10 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
 
     MANIFEST_0 += """>"""
     MANIFEST_0 += """
-    <application android:label="@string/app_name" %ICON_ATTR%"""
+    <application android:label="@string/app_name"
+        %ICON_ATTR%
+        %ICON_ROUND_ATTR%
+    """
 
     if target_num >= 21:
         MANIFEST_0 += """
@@ -830,9 +837,9 @@ def write_ant_properties(dest, dependencies, src, library, keystore, keyalias,
 #
 #
 #
-def copy_drawable_files_with_name(dest, root_dir, filename):
+def copy_drawable_files_with_name(dest, root_dir, filename, rounded_filename):
     types = [ ]
-    optional_types = [ "hdpi", "mdpi", "ldpi", "xhdpi", "xxhdpi" ]
+    optional_types = [ "hdpi", "mdpi", "ldpi", "xhdpi", "xxhdpi", "xxxhdpi" ]
 
     # Check for files
 
@@ -843,17 +850,27 @@ def copy_drawable_files_with_name(dest, root_dir, filename):
             print( "ERROR: Failed to find '%s'" % src )
             exit(1)
         src_dest[src] = os.path.join(dest, "res", "drawable-%s" % i)
+
+        rounded_src = os.path.join(root_dir, "drawable-%s" % i, rounded_filename)
+        if os.path.exists(rounded_src):
+            src_dest[rounded_src] = os.path.join(dest, "res", "drawable-%s" % i)
+
     for i in optional_types:
         src = os.path.join(root_dir, "drawable-%s" % i, filename)
         if os.path.exists(src):
             src_dest[src] = os.path.join(dest, "res", "drawable-%s" % i)
+
+        rounded_src = os.path.join(root_dir, "drawable-%s" % i, rounded_filename)
+        if os.path.exists(rounded_src):
+            src_dest[rounded_src] = os.path.join(dest, "res", "drawable-%s" % i)
+
 
     for src in src_dest:
         dest = src_dest[src]
         verbose("[DRAWABLE] %s -> %s" % (src, dest))
 
         mkdir_if_not_exists(dest)
-        copy_file_if_different(src, os.path.join(dest, filename))
+        copy_file_if_different(src, os.path.join(dest, os.path.basename(src)))
 
 #
 #
@@ -1413,7 +1430,7 @@ def main():
     # Copy icon file
 
     if icon_dir:
-        copy_drawable_files_with_name(dest, icon_dir, "icon.png")
+        copy_drawable_files_with_name(dest, icon_dir, "icon.png", "ic_launcher_round.png")
     elif icon_file:
         copy_icon_single_file(dest, icon_file)
 
