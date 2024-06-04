@@ -648,7 +648,7 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+                <!-- <category android:name="android.intent.category.LEANBACK_LAUNCHER" /> -->
                 <category android:name="tv.ouya.intent.category.GAME"/>
             </intent-filter>"""
 
