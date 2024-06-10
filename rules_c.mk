@@ -964,14 +964,20 @@ define _make_apk_native_rule
 
 endef
 
+# Target for signing the AAB
+.PHONY: signAab
+signAab:
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):signAab
+
 # Rule to make an APK
 # 1 - apk name
 # 2 - apk location
-define _make_apk_rule
+define _make_apk_rules
 
   .PHONY : $(2)/AndroidManifest.xml
-  .PHONY : $(1)_do_prebuild $(1)_do_gradle $(1)_post_build
+  .PHONY : $(1)_do_prebuild $(1)_do_gradle $(1)_post_build $(1)_signAab $(1)_install $(1)_run $(1)
 
+  # Create the AndroidManifest.xml
   $(2)/AndroidManifest.xml :
 	@echo [MAKE APK] $(2)
 	$(CMDPREFIX)mkdir -p $(2)/libs/$(ANDROID_ARCH_NAME)
@@ -991,36 +997,37 @@ define _make_apk_rule
       $(if $($(1)_title),--title "$($(1)_title)")                            \
       $(if $($(1)_activity),--activity $($(1)_activity))                     \
       $(addprefix --permissions ,$($(1)_permissions))                        \
-      $(addprefix --remove-permissions ,$($(1)_remove_permissions))                        \
+      $(addprefix --remove-permissions ,$($(1)_remove_permissions))          \
       $(if $($(1)_icondir),--icon-dir $($(1)_icondir))                       \
       $($(1)_apk_depflags)                                                   \
       $($(1)_flags)
 
+  # Prebuild step
   $(1)_do_prebuild : $(foreach a,$($(1)_archs),_$(1)_make_$(a)_native_libs)
-
 	echo "== PRE BUILD =="
 	$($(1)_prebuild)
 
+  # Gradle build step
   $(1)_do_gradle : $(1)_do_prebuild $(2)/AndroidManifest.xml
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG)
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew :$(1):bundle$(CONFIG)
 	$($(1)_postbuild)
 	$(if $($(1)_postbuild),$(if $($(1)_repackage), \
-      ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew :$(1):assemble$(CONFIG) \
+      ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew :$(1):bundle$(CONFIG) \
     ))
 
-  # $(1)_do_postbuild : $(1)_do_gradle
-  # 	echo "== POST BUILD =="
+  # Sign the AAB
+  $(1)_signAab : $(1)_do_gradle
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):signAab
 
-  $(1) : $(1)_do_gradle
+  # Install the signed AAB
+  $(1)_install : $(1)_signAab
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):installGame
 
-  .PHONY : $(1)_install
-  $(1)_install:
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew installGame
+  # Run the installed game
+  $(1)_run : $(1)_install
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):runGame
 
-  .PHONY : $(1)_run
-  $(1)_run: $(1)_install
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew runGame
-
+  # Deploy the APK
   .PHONY : $(1)_deploy
   $(1)_deploy : # $(1)
 	@[ "" != "$(APKDEPLOYPATH)" ] || \
@@ -1037,30 +1044,29 @@ define _make_apk_rule
        exit 1)
 	cp "$($(1)_apk_file)" "$(APKDEPLOYPATH)/$($(1)_apk_deploy_name)"
 
+  # Clean Java build artifacts
   .PHONY : $(1)_java_clean
   $(1)_java_clean : $(2)/AndroidManifest.xml
 	ANDROID_HOME=`$(abspath $(ANDROID_SDK))` APKPATH=$(2) ./gradlew clean
 
+  # Clean all build artifacts
   .PHONY : $(1)_clean
   $(1)_clean :
 	$(RM) -rf $(2)
 
-  clean : $(1)_clean
+  # Rule to build the APK without installing or running
+  .PHONY : $(1)
+  $(1) : $(1)_signAab
 endef
 
-
+# Apply the rules for each APK
 ifeq ($(TARGET),android)
-
-  # Rules to build the native libs for each arch into the correct
-  # location, followed by the APK itself.
-
   $(foreach apk,$(APKS),													\
     $(if $($(apk)_native), $(foreach arch,$($(apk)_archs),                  \
       $(eval $(call _make_apk_native_rule,$(apk),$($(apk)_apk_dest),$(arch))) \
     ))																		\
-    $(eval $(call _make_apk_rule,$(apk),$($(apk)_apk_dest)))                \
+    $(eval $(call _make_apk_rules,$(apk),$($(apk)_apk_dest)))                \
   )
-
 endif
 
 ############################################################
@@ -1218,15 +1224,29 @@ $(foreach mod,$(C_MODULES),$(eval \
   $(call _make_clean_rule,$(mod)) \
 ))
 
-# clean rule
-.PHONY : clean
-clean : $(foreach mod,$(C_MODULES),$(mod)_clean)
-    ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew clean
+# Define the clean rule for each module
+define _define_clean_rule
+.PHONY: $(1)_clean
+$(1)_clean:
+	@echo "Cleaning $(1)..."
+	@-$(RM) -rf $(OBJDIR)/$(1) $(DEPDIR)/$(1) $(BINDIR)/$(1)
+endef
 
-.PHONY : depclean
-depclean :
+# Apply the clean rule to each module
+$(foreach module, $(C_MODULES), $(eval $(call _define_clean_rule,$(module))))
+
+# General clean rule
+.PHONY: clean
+clean:
+	@$(foreach module, $(C_MODULES), $(MAKE) -k $(module)_clean;)
+
+# Clean dependencies
+.PHONY: depclean
+depclean:
 	$(RM) -rf $(DEPDIR)
 
-.PHONY : distclean
-distclean :
+# Distclean rule
+.PHONY: distclean
+distclean: clean depclean
 	$(RM) -rf dep obj lib bin
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew clean
