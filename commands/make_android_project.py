@@ -837,7 +837,7 @@ def write_ant_properties(dest, dependencies, src, library, keystore, keyalias,
 #
 #
 #
-def copy_drawable_files_with_name(dest, root_dir, filename, rounded_filename):
+def copy_drawable_files_with_name(dest, root_dir, filename, rounded_filename=None):
     types = [ ]
     optional_types = [ "hdpi", "mdpi", "ldpi", "xhdpi", "xxhdpi", "xxxhdpi" ]
 
@@ -851,18 +851,20 @@ def copy_drawable_files_with_name(dest, root_dir, filename, rounded_filename):
             exit(1)
         src_dest[src] = os.path.join(dest, "res", "drawable-%s" % i)
 
-        rounded_src = os.path.join(root_dir, "drawable-%s" % i, rounded_filename)
-        if os.path.exists(rounded_src):
-            src_dest[rounded_src] = os.path.join(dest, "res", "drawable-%s" % i)
+        if rounded_filename:
+            rounded_src = os.path.join(root_dir, "drawable-%s" % i, rounded_filename)
+            if os.path.exists(rounded_src):
+                src_dest[rounded_src] = os.path.join(dest, "res", "drawable-%s" % i)
 
     for i in optional_types:
         src = os.path.join(root_dir, "drawable-%s" % i, filename)
         if os.path.exists(src):
             src_dest[src] = os.path.join(dest, "res", "drawable-%s" % i)
 
-        rounded_src = os.path.join(root_dir, "drawable-%s" % i, rounded_filename)
-        if os.path.exists(rounded_src):
-            src_dest[rounded_src] = os.path.join(dest, "res", "drawable-%s" % i)
+        if rounded_filename:
+            rounded_src = os.path.join(root_dir, "drawable-%s" % i, rounded_filename)
+            if os.path.exists(rounded_src):
+                src_dest[rounded_src] = os.path.join(dest, "res", "drawable-%s" % i)
 
 
     for src in src_dest:
