@@ -1015,12 +1015,13 @@ define _make_apk_rules
       ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew :$(1):bundle$(CONFIG) \
     ))
 
-  # Sign the AAB
-  $(1)_signAab : $(1)_do_gradle
+  # Sign the AAB and APK
+  $(1)_sign : $(1)_do_gradle
 	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):signAab
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):signApk
 
-  # Install the signed AAB
-  $(1)_install : $(1)_signAab
+  # Install the signed AAB and APK
+  $(1)_install : $(1)_sign
 	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):installGame
 
   # Run the installed game
@@ -1054,9 +1055,9 @@ define _make_apk_rules
   $(1)_clean :
 	$(RM) -rf $(2)
 
-  # Rule to build the APK without installing or running
+  # Rule to build the AAB and APK without installing or running
   .PHONY : $(1)
-  $(1) : $(1)_signAab
+  $(1) : $(1)_sign
 endef
 
 # Apply the rules for each APK
