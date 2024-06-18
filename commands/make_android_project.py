@@ -480,7 +480,7 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
 
     table['%BANNER_ATTR%'] = ''
     if table['%BANNER_DIR%']:
-        table['%BANNER_ATTR%'] = 'android:banner="@mipmap/ic_launcher_banner"'
+        table['%BANNER_ATTR%'] = 'android:banner="@drawable/banner"'
 
     # Start writing
 
@@ -520,6 +520,7 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
     mkdir_if_not_exists(res_values_dir)
     for x in [ 'mdpi', 'hdpi', 'xhdpi', 'xxhdpi', 'xxxhdpi' ]:
         mkdir_if_not_exists(os.path.join(res_dir, 'mipmap-%s' % x))
+        mkdir_if_not_exists(os.path.join(res_dir, 'drawable-%s' % x))
     res_values_strings = os.path.join(res_values_dir, 'strings.xml')
 
     res_values_strings_data = \
@@ -835,36 +836,33 @@ def write_ant_properties(dest, dependencies, src, library, keystore, keyalias,
 #
 #
 #
-def copy_mipmap_files_with_name(dest, root_dir, filename, rounded_filename=None):
+def copy_drawable_files_with_name(dest, root_dir, prefix, filename, rounded_filename=None):
     types = [ ]
     optional_types = [ "mdpi", "hdpi", "xhdpi", "xxhdpi", "xxxhdpi" ]
 
     # Check for files
-
-    prefix = "mipmap-"
-
     src_dest = {}
     for i in types:
-        src = os.path.join(root_dir, prefix + "%s" % i, filename)
+        src = os.path.join(root_dir, prefix + "-%s" % i, filename)
         if not os.path.exists(src):
             print( "ERROR: Failed to find '%s'" % src )
             exit(1)
-        src_dest[src] = os.path.join(dest, "res", prefix + "%s" % i)
+        src_dest[src] = os.path.join(dest, "res", prefix + "-%s" % i)
 
         if rounded_filename:
-            rounded_src = os.path.join(root_dir, prefix + "%s" % i, rounded_filename)
+            rounded_src = os.path.join(root_dir, prefix + "-%s" % i, rounded_filename)
             if os.path.exists(rounded_src):
-                src_dest[rounded_src] = os.path.join(dest, "res", prefix + "%s" % i)
+                src_dest[rounded_src] = os.path.join(dest, "res", prefix + "-%s" % i)
 
     for i in optional_types:
-        src = os.path.join(root_dir, prefix + "%s" % i, filename)
+        src = os.path.join(root_dir, prefix + "-%s" % i, filename)
         if os.path.exists(src):
-            src_dest[src] = os.path.join(dest, "res", prefix + "%s" % i)
+            src_dest[src] = os.path.join(dest, "res", prefix + "-%s" % i)
 
         if rounded_filename:
-            rounded_src = os.path.join(root_dir, prefix + "%s" % i, rounded_filename)
+            rounded_src = os.path.join(root_dir, prefix + "-%s" % i, rounded_filename)
             if os.path.exists(rounded_src):
-                src_dest[rounded_src] = os.path.join(dest, "res", prefix + "%s" % i)
+                src_dest[rounded_src] = os.path.join(dest, "res", prefix + "-%s" % i)
 
 
     for src in src_dest:
@@ -1042,7 +1040,7 @@ def usage():
     --icon-file <icon-file>
                         - (optional) Use specific file as icon
     --banner-dir <banner-dir>
-                        - (optional) Use mipmap-*/ic_launcher_banner.png from <banner-dir>
+                        - (optional) Use drawable-*/banner.png from <banner-dir>
     --key-store <file>  - (optional) Location of keystore
     --key-alias <alias> - (optional) Alias of key in keys store to use
     --xml <file>        - (optional) .xml file to copy to res/xml/
@@ -1435,13 +1433,13 @@ def main():
     # Copy icon file
 
     if icon_dir:
-        copy_mipmap_files_with_name(dest, icon_dir, "ic_launcher.png", "ic_launcher_round.png")
+        copy_drawable_files_with_name(dest, icon_dir, "mipmap", "ic_launcher.png", "ic_launcher_round.png")
     elif icon_file:
         copy_icon_single_file(dest, icon_file)
 
     # Copy banner file(s)
     if banner_dir:
-        copy_mipmap_files_with_name(dest, banner_dir, "ic_launcher_banner.png")
+        copy_drawable_files_with_name(dest, banner_dir, "drawable", "banner.png")
 
     if options['ouya_icon']:
         if "ouya_icon.png" != os.path.split(options['ouya_icon'])[1]:
