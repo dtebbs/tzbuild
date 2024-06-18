@@ -999,6 +999,7 @@ define _make_apk_rules
       $(addprefix --permissions ,$($(1)_permissions))                        \
       $(addprefix --remove-permissions ,$($(1)_remove_permissions))          \
       $(if $($(1)_icondir),--icon-dir $($(1)_icondir))                       \
+      $(if $($(1)_bannerdir),--banner-dir $($(1)_bannerdir))                       \
       $($(1)_apk_depflags)                                                   \
       $($(1)_flags)
 
