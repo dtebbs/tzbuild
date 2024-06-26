@@ -93,7 +93,9 @@ MANIFEST_1_CHARTBOOST = """
         -->
         <activity android:name="com.chartboost.sdk.CBImpressionActivity"
                   android:excludeFromRecents="true"
-                  android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+                  android:hardwareAccelerated="true"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen"
+                  android:configChanges="keyboardHidden|orientation|screenSize" />
         <!-- CHARTBOOST END -->"""
 
 CHARTBOOST_PERMISSIONS = ";android.permission.INTERNET" + \
