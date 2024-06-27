@@ -33,6 +33,9 @@ dllout?= -o #
 
 appout?= -o #
 
+# This allows to build just one target among many listed in settings.gradle
+GRADLE_OPTIONS ?= --configure-on-demand
+
 #
 # Platform Checks
 #
@@ -967,7 +970,7 @@ endef
 # Target for signing the AAB
 .PHONY: signAab
 signAab:
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):signAab
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew $(GRADLE_OPTIONS) :$(1):signAab
 
 # Rule to make an APK
 # 1 - apk name
@@ -1010,24 +1013,24 @@ define _make_apk_rules
 
   # Gradle build step
   $(1)_do_gradle : $(1)_do_prebuild $(2)/AndroidManifest.xml
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew :$(1):bundle$(CONFIG)
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew $(GRADLE_OPTIONS) :$(1):bundle$(CONFIG)
 	$($(1)_postbuild)
 	$(if $($(1)_postbuild),$(if $($(1)_repackage), \
-      ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew :$(1):bundle$(CONFIG) \
+      ANDROID_HOME=$(abspath $(ANDROID_SDK)) APKPATH=$(2) ./gradlew $(GRADLE_OPTIONS) :$(1):bundle$(CONFIG) \
     ))
 
   # Sign the AAB and APK
   $(1)_sign : $(1)_do_gradle
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):signAab
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):signApk
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew $(GRADLE_OPTIONS) :$(1):signAab
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew $(GRADLE_OPTIONS) :$(1):signApk
 
   # Install the signed AAB and APK
   $(1)_install : $(1)_sign
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):installGame
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew $(GRADLE_OPTIONS) :$(1):installGame
 
   # Run the installed game
   $(1)_run : $(1)_install
-	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew :$(1):runGame
+	ANDROID_HOME=$(abspath $(ANDROID_SDK)) ./gradlew $(GRADLE_OPTIONS) :$(1):runGame
 
   # Deploy the APK
   .PHONY : $(1)_deploy
