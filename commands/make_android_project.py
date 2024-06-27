@@ -727,13 +727,14 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
                       android:normalScreens="true"
                       android:smallScreens="false"
                       android:anyDensity="true"
-                      tools:replace="android:smallScreens"
                       />
     <uses-feature android:name="android.hardware.screen.landscape" />
     <uses-feature android:glEsVersion="%GLES_VERSION%" />
     <!-- SCREEN END -->
 
     """
+    # Not sure when we needed this. Seems to only give warnings
+    # tools:replace="android:smallScreens"
 
     if options['gamepad']:
         MANIFEST_2 += """
