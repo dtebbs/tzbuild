@@ -530,7 +530,7 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
 <resources>
     <string name="app_name">%APP_TITLE%</string>""", table)
     for k, v in resource_strings.items():
-        res_values_strings_data += '\n    <string name="%s">%s</string>' \
+        res_values_strings_data += '\n    <string name="%s" translatable="false">%s</string>' \
             % (k, v)
     res_values_strings_data += """
 </resources>
@@ -710,6 +710,12 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
         </receiver>""" % referrer_listener
 
     data += replace_tags(MANIFEST_0, table)
+
+    # Google Play Services
+    has_play_games_services = 'game_services_project_id' in resource_strings
+    if has_play_games_services:
+        _verbose("Adding Google Play Services meta-data")
+        data += """<meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/game_services_project_id"/>"""
 
     # Extra decls
 
