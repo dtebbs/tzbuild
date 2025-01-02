@@ -38,7 +38,7 @@ ifeq (auto,$(XCODE_SDK_VER))
   $(warning Using auto-detected SDK version: $(XCODE_SDK_VER))
 endif
 
-XCODE_SDK_VER ?= 14.5
+XCODE_SDK_VER ?= 15.1
 
 # Minimum OS version to target
 XCODE_MIN_OS_VER ?= 10.9
