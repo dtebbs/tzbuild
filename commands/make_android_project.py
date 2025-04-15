@@ -1120,6 +1120,7 @@ def main():
     icon_dir = None
     icon_file = None
     banner_dir = None
+    res_dir = None
     keystore = None
     keyalias = None
     glEsVersion = "0x00020000"
@@ -1267,6 +1268,8 @@ def main():
             icon_file = args.pop(0)
         elif "--banner-dir" == arg:
             banner_dir = args.pop(0)
+        elif "--res-dir" == arg:
+            res_dir = args.pop(0)
         elif "--key-store" == arg:
             keystore = args.pop(0)
         elif "--key-alias" == arg:
@@ -1439,9 +1442,12 @@ def main():
     write_ant_properties(dest, depends, src, library, keystore, keyalias,
                          options)
 
-    # Copy icon file
-
-    if icon_dir:
+    # Copy all resources (adaptive icons, legacy icons, etc.) if --res-dir is provided
+    import shutil
+    if res_dir and os.path.exists(res_dir):
+        resource_dst = os.path.join(dest, "res")
+        shutil.copytree(res_dir, resource_dst, dirs_exist_ok=True)
+    elif icon_dir: # Fallback: legacy icon_dir/icon_file logic if --res-dir is not set
         copy_drawable_files_with_name(dest, icon_dir, "mipmap", "ic_launcher.png", "ic_launcher_round.png")
     elif icon_file:
         copy_icon_single_file(dest, icon_file)
