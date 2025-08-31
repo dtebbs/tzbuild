@@ -1063,6 +1063,21 @@ define _make_apk_rules
   # Rule to build the AAB and APK without installing or running
   .PHONY : $(1)
   $(1) : $(1)_sign
+
+  # Google Play deployment rules
+  .PHONY : $(1)_deploy_internal $(1)_deploy_production $(1)_promote
+  $(1)_deploy_internal : $(1)_sign
+	@echo "Deploying $(1) to internal testing track..."
+	platform/android/deploy/deploy.sh $(1) internal
+
+  $(1)_deploy_production : $(1)_sign
+	@echo "Deploying $(1) to production track..."
+	platform/android/deploy/deploy.sh $(1) production
+
+  $(1)_promote :
+	@echo "Promoting $(1) from internal to production..."
+	platform/android/deploy/deploy.sh $(1) promote
+
 endef
 
 # Apply the rules for each APK
