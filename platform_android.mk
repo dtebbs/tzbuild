@@ -10,12 +10,10 @@ $(info ** Building for Android ARCH:$(ARCH))
 # Util Functions
 ############################################################
 
-# 1 - tzbuild arch (armv7a, x86, etc)
+# 1 - tzbuild arch (arm64, x86, etc) - armv7a support removed
 _android_arch_name = $(strip                   \
-  $(if $(filter armv7a,$(1)),armeabi-v7a,      \
-    $(if $(filter arm64,$(1)),arm64-v8a,       \
-      $(1)                                     \
-    )                                          \
+  $(if $(filter arm64,$(1)),arm64-v8a,         \
+    $(1)                                       \
   ))
 
 ############################################################
@@ -68,12 +66,7 @@ ifeq ($(wildcard $(NDK_SYSROOT)/.*),)
 endif
 $(info ** NDK_SYSROOT: $(NDK_SYSROOT))
 
-ifeq ($(ARCH),armv7a)
-    NDK_ARCHNAME := armeabi-v7a
-    NDK_TRIPLE := armv7-linux-androideabi
-    NDK_FLAGS := -target $(NDK_TRIPLE) -march=armv7-a -mfloat-abi=softfp -mfpu=vfp
-    NDK_ARCH_DIR := arm-linux-androideabi
-else ifeq ($(ARCH),arm64)
+ifeq ($(ARCH),arm64)
     NDK_ARCHNAME := arm64-v8a
     NDK_TRIPLE := aarch64-linux-android
     NDK_FLAGS := -target $(NDK_TRIPLE) -march=armv8-a
@@ -157,15 +150,7 @@ CFLAGSPRE += \
 # -fstack-protector
 
 CFLAGSPRE += -fpic
-ifeq ($(ARCH),armv7a)
-  CFLAGSPRE += -mthumb
-
-  ifeq ($(TEGRA3),1)
-    CFLAGSPRE += -mfpu=neon -mcpu=cortex-a9 -mfloat-abi=softfp
-  else
-    CFLAGSPRE += -march=armv7-a -mfloat-abi=softfp -mfpu=vfp
-  endif
-endif
+# armv7a-specific compiler flags removed (32-bit support dropped)
 
 ifeq ($(ARCH),x86)
   CFLAGSPRE += -Wa,--noexecstack
@@ -277,10 +262,7 @@ DLLFLAGSPOST += \
 #DLLFLAGSPOST += $(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM)/crtbegin_so.o
 #DLLFLAGSPOST += $(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM)/crtend_so.o
 
-ifeq ($(ARCH),armv7a)
-  DLLFLAGSPOST += \
-    -Wl,--fix-cortex-a8
-endif
+# armv7a-specific linker flags removed (32-bit support dropped)
 
 # -Wl,--no-whole-archive
 # -Wl,-rpath-link=.
