@@ -10,10 +10,13 @@ $(info ** Building for Android ARCH:$(ARCH))
 # Util Functions
 ############################################################
 
-# 1 - tzbuild arch (arm64, x86, etc) - armv7a support removed
-_android_arch_name = $(strip                   \
-  $(if $(filter arm64,$(1)),arm64-v8a,         \
-    $(1)                                       \
+# 1 - tzbuild arch (arm64, armv7a, x86, etc)
+#    Map tzbuild ARCH names to Android ABI directory names
+_android_arch_name = $(strip                           \
+  $(if $(filter arm64,$(1)),arm64-v8a,                 \
+    $(if $(filter armv7a,$(1)),armeabi-v7a,            \
+      $(1)                                             \
+    )                                                  \
   ))
 
 ############################################################
@@ -67,12 +70,18 @@ endif
 $(info ** NDK_SYSROOT: $(NDK_SYSROOT))
 
 ifeq ($(ARCH),arm64)
-    NDK_ARCHNAME := arm64-v8a
-    NDK_TRIPLE := aarch64-linux-android
-    NDK_FLAGS := -target $(NDK_TRIPLE) -march=armv8-a
-    NDK_ARCH_DIR := aarch64-linux-android
+  NDK_ARCHNAME := arm64-v8a
+  NDK_TRIPLE := aarch64-linux-android
+  NDK_FLAGS := -target $(NDK_TRIPLE) -march=armv8-a
+  NDK_ARCH_DIR := aarch64-linux-android
+else ifeq ($(ARCH),armv7a)
+  NDK_ARCHNAME := armeabi-v7a
+  NDK_TRIPLE := armv7a-linux-androideabi
+  # Typical flags for 32-bit ARMv7-A with NEON; adjust if needed
+  NDK_FLAGS := -target $(NDK_TRIPLE) -march=armv7-a -mfpu=neon -mfloat-abi=softfp
+  NDK_ARCH_DIR := arm-linux-androideabi
 else
-    $(error "Unsupported architecture: $(ARCH)")
+  $(error "Unsupported architecture: $(ARCH)")
 endif
 NDK_LIBDIR := $(NDK_SYSROOT)/usr/lib/$(NDK_ARCH_DIR)
 ifeq ($(wildcard $(NDK_LIBDIR)/.*),)
@@ -124,7 +133,9 @@ NDK_PLATFORM_INCLUDES = \
     $(ANDROID_NDK)/sources/android/native_app_glue \
     $(ANDROID_NDK)/sysroot/usr/include
 
-NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/$(NDK_ARCHNAME)
+# Note: NDK provides arch-specific includes under *-linux-android names.
+# Using the generic include plus arch include keeps parity with prior setup.
+NDK_ISYSTEM = $(ANDROID_NDK)/sysroot/usr/include/$(NDK_ARCH_DIR)
 
 # Set the variant to include the arch
 
@@ -150,7 +161,10 @@ CFLAGSPRE += \
 # -fstack-protector
 
 CFLAGSPRE += -fpic
-# armv7a-specific compiler flags removed (32-bit support dropped)
+# Armv7a specific handling (keep minimal; add only when building armv7a)
+ifeq ($(ARCH),armv7a)
+  CFLAGSPRE += -mthumb
+endif
 
 ifeq ($(ARCH),x86)
   CFLAGSPRE += -Wa,--noexecstack
@@ -262,7 +276,7 @@ DLLFLAGSPOST += \
 #DLLFLAGSPOST += $(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM)/crtbegin_so.o
 #DLLFLAGSPOST += $(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM)/crtend_so.o
 
-# armv7a-specific linker flags removed (32-bit support dropped)
+# Armv7a specific linker handling can be added here if needed
 
 # -Wl,--no-whole-archive
 # -Wl,-rpath-link=.
@@ -290,4 +304,3 @@ $(info ** CFLAGSPRE: $(CFLAGSPRE))
 $(info ** CFLAGSPOST: $(CFLAGSPOST))
 $(info ** LDFLAGSPRE: $(LDFLAGSPRE))
 $(info ** LDFLAGSPOST: $(LDFLAGSPOST))
-

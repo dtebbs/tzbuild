@@ -765,11 +765,15 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
     MANIFEST_3_PERMISSION_POST = '" />'
 
     for p in permissions:
+        if not p:
+            continue
         data += MANIFEST_3_PERMISSION_PRE + p + MANIFEST_3_PERMISSION_POST
 
     # Process remove-permissions
     remove_permissions = list(set(remove_permissions.split(';')))
     for p in remove_permissions:
+        if not p:
+            continue
         data += MANIFEST_3_PERMISSION_PRE + p + '" tools:node="remove" />'
 
     # Footer
