@@ -255,11 +255,13 @@ $(info ** NDK_TOOLCHAIN: $(NDK_TOOLCHAIN))
 
 # NOTE: we need the -B path for the linker to find crtbegin_so.o and crtend_so.o .
 #  Apparently it shouldn't be necessary, but this is what it's come down to.
+# Keep 16 KB page alignment to satisfy Android 15+ requirement with NDK r27.
 DLLFLAGSPRE += -shared \
   --sysroot=$(SYSROOT) \
   -L$(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM) \
   -B$(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM) \
   -nostdlib++ \
+  -Wl,-z,max-page-size=16384 \
   -Wl,-soname,$$(notdir $$@)
 # -v  # For verbose
 # -nostdlib
