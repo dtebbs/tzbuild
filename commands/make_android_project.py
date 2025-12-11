@@ -560,6 +560,24 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
             android:installLocation="auto" """
 
     MANIFEST_0 += """>"""
+
+    # Give visibility to default browsers so resolveActivity() works on
+    # Android 11+ (API 30+) when package visibility restrictions apply.
+    queries_block = """
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="http" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" />
+        </intent>
+    </queries>""" if target_num >= 30 else ""
+
+    MANIFEST_0 += queries_block
     MANIFEST_0 += """
     <application android:label="@string/app_name"
         %ICON_ATTR%
