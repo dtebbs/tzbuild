@@ -36,6 +36,7 @@ ANDROID_SDK_TARGET ?= android-15
 ANDROID_SDK_TARGET_NUM ?= 15
 ANDROID_SDK_VERSION ?= 8
 ANDROID_SDK ?= $(ANDROID_SDK_PATH)/android-sdk-$(android_build_host)
+ANDROID_NDK_API_NUM ?= $(ANDROID_SDK_TARGET_NUM)
 
 # NDK dir
 
@@ -107,11 +108,25 @@ CC := $(NDK_TOOLBIN)/clang
 CXX := $(NDK_TOOLBIN)/clang++
 AR := $(NDK_TOOLBIN)/llvm-ar
 
+CLANG_RESOURCE_DIR := $(shell $(NDK_TOOLBIN)/clang++ --print-resource-dir)
+ifeq ($(ARCH),arm64)
+  CLANG_RT_ARCH := aarch64
+else ifeq ($(ARCH),armv7a)
+  CLANG_RT_ARCH := arm
+else
+  $(error "Unsupported architecture: $(ARCH)")
+endif
+NDK_LIBUNWIND_LIB := $(CLANG_RESOURCE_DIR)/lib/linux/$(CLANG_RT_ARCH)/libunwind.a
+ifeq ($(wildcard $(NDK_LIBUNWIND_LIB)),)
+  $(error libunwind.a not found: $(NDK_LIBUNWIND_LIB))
+endif
+
 # Some include paths
 
 NDK_LIBCPP_DIR = $(SYSROOT)/usr
 NDK_LIBCPP_LIBS = $(NDK_LIBDIR)/libc++_static.a \
-                  $(NDK_LIBDIR)/libc++abi.a
+                  $(NDK_LIBDIR)/libc++abi.a \
+                  $(NDK_LIBUNWIND_LIB)
 
 # NDK_LIBCPP_INCLUDES = $(NDK_LIBCPP_DIR)/libcxx/include
 NDK_LIBCPP_INCLUDES = \
@@ -178,7 +193,7 @@ CFLAGSPOST += \
  --sysroot=$(SYSROOT) \
  -I$(SYSROOT)/usr/include \
  -isystem $(NDK_ISYSTEM) \
- -D__ANDROID_API__=$(ANDROID_SDK_TARGET_NUM)
+ -D__ANDROID_API__=$(ANDROID_NDK_API_NUM)
 # -v  # For verbose
 
 ifeq ($(CONFIG),debug)
@@ -258,8 +273,8 @@ $(info ** NDK_TOOLCHAIN: $(NDK_TOOLCHAIN))
 # Keep 16 KB page alignment to satisfy Android 15+ requirement with NDK r27.
 DLLFLAGSPRE += -shared \
   --sysroot=$(SYSROOT) \
-  -L$(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM) \
-  -B$(NDK_LIBDIR)/$(ANDROID_SDK_TARGET_NUM) \
+  -L$(NDK_LIBDIR)/$(ANDROID_NDK_API_NUM) \
+  -B$(NDK_LIBDIR)/$(ANDROID_NDK_API_NUM) \
   -nostdlib++ \
   -Wl,-z,max-page-size=16384 \
   -Wl,-soname,$$(notdir $$@)
