@@ -104,6 +104,17 @@ CHARTBOOST_PERMISSIONS = ";android.permission.INTERNET" + \
     # ";android.permission.WRITE_EXTERNAL_STORAGE" + \
     # ";android.permission.ACCESS_WIFI_STATE"
 
+MANIFEST_1_APPLOVIN = """
+        <!-- APPLOVIN BEGIN -->
+        <activity android:name="com.applovin.adview.AppLovinFullscreenActivity"
+                  android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|smallestScreenSize|uiMode"
+                  android:hardwareAccelerated="true"
+                  android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />
+        <!-- APPLOVIN END -->"""
+
+APPLOVIN_PERMISSIONS = ";android.permission.INTERNET" + \
+    ";android.permission.ACCESS_NETWORK_STATE"
+
 MANIFEST_1_TAPFORTAP = "defined in write_manifest"
 
 # some of these are optional
@@ -453,6 +464,7 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
         'tapit'      : [ MANIFEST_1_TAPIT, TAPIT_PERMISSIONS, False ],
         'mediba'     : [ MANIFEST_1_MEDIBA, MEDIBA_PERMISSIONS, False ],
         'chartboost' : [ MANIFEST_1_CHARTBOOST, CHARTBOOST_PERMISSIONS, False ],
+        'applovin'   : [ MANIFEST_1_APPLOVIN, APPLOVIN_PERMISSIONS, False ],
         'tapfortap'  : [ MANIFEST_1_TAPFORTAP, TAPFORTAP_PERMISSIONS, False ],
         'heyzap'     : [ MANIFEST_1_HEYZAP, HEYZAP_PERMISSIONS, False ],
         'openkit'    : [ MANIFEST_1_OPENKIT, OPENKIT_PERMISSIONS, False ],
@@ -1110,6 +1122,7 @@ def usage():
     --tapit             - (optional) include MillennialMedia manifest entries
     --mediba            - (optional) include Medbia manifest entries
     --chartboost        - (optional) include ChartBoost manifest entries
+    --applovin          - (optional) include AppLovin MAX manifest entries
     --tapfortap         - (optional) include TapForTap manifest entries
     --heyzap            - (optional) include HeyZap manifest entries
     --appayable         - (optional) include Appayable manifest entries
@@ -1342,6 +1355,8 @@ def main():
             extras.append('mediba')
         elif "--chartboost" == arg:
             extras.append('chartboost')
+        elif "--applovin" == arg:
+            extras.append('applovin')
         elif "--tapfortap" == arg:
             extras.append('tapfortap')
         elif "--heyzap" == arg:
