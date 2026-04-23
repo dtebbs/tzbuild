@@ -686,7 +686,7 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
     if intent_filters:
         with open(intent_filters, "rb") as intent_f:
             MANIFEST_0 += "\n"
-            MANIFEST_0 += intent_f.read()
+            MANIFEST_0 += intent_f.read().decode("utf-8")
 
     MANIFEST_0 += options['activity_extra_code']
 
@@ -700,7 +700,7 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
     for a in options['activity_files']:
         with open(a, "rb") as a_f:
             MANIFEST_0 += "\n"
-            MANIFEST_0 += a_f.read()
+            MANIFEST_0 += a_f.read().decode("utf-8")
 
     # Activities for the home screen
 
