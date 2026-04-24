@@ -1232,7 +1232,22 @@ def main():
     def add_activity_code(ac):
         options['activity_extra_code'] += ac
 
-    print( sys.argv[1:] )
+    def redacted_args(argv):
+        redacted = []
+        skip_next = False
+        for idx, value in enumerate(argv):
+            if skip_next:
+                skip_next = False
+                continue
+            redacted.append(value)
+            if value == "--key-store" and idx + 1 < len(argv):
+                key_store = argv[idx + 1]
+                key_store_path = key_store.split(",", 1)[0]
+                redacted.append(key_store_path + ",<redacted>")
+                skip_next = True
+        return redacted
+
+    print( redacted_args(sys.argv[1:]) )
 
     while len(args):
         arg = args.pop(0)
