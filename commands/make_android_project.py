@@ -772,6 +772,13 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
     # Not sure when we needed this. Seems to only give warnings
     # tools:replace="android:smallScreens"
 
+    if options['vulkan']:
+        MANIFEST_2 += """
+    <uses-feature
+        android:name="android.hardware.vulkan.version"
+        android:version="0x400003"
+        android:required="true" />"""
+
     if options['gamepad']:
         MANIFEST_2 += """
     <uses-feature android:name="android.hardware.gamepad" android:required="false"/>"""
@@ -1130,6 +1137,7 @@ def usage():
     --playhaven         - (optional) include playhaven manifest entries
     --greystripe        - (optional) include greystripe manifest entries
     --mdotm             - (optional) include mdotm manifest entries
+    --vulkan            - (optional) require Vulkan 1.0 hardware support
   Example:
 
     make_android_project --dest java --version 3.2.5 --target 'android-15' --name 'myproj' --title 'MyProject' --package com.company.project.app --sdk-version 8 --activity MyProjectActivity
@@ -1195,6 +1203,7 @@ def main():
         'banner': None,
         'gearvr': None,
         'c2inc': None,
+        'vulkan': False,
         }
 
     def add_meta(kv, meta_map = meta):
@@ -1416,6 +1425,8 @@ def main():
             options['c2inc'] = True
         elif "--require-gles30" == arg:
             glEsVersion = "0x00030000"
+        elif "--vulkan" == arg:
+            options['vulkan'] = True
         else:
             print( "Error: unknown parameter: '%s'" % arg )
             print( "" )

@@ -516,7 +516,7 @@ define _make_c_object_rule
 
   .PRECIOUS : $(3)
 
-  $(3) : $(2) $(_$1_pchfile)
+  $(3) : $(2) $(_$1_pchfile) $($(1)_generated_headers)
 	$(CMDPREFIX)$(MKDIR) $($(1)_OBJDIR) $($(1)_DEPDIR)
 	@echo [CC $(TARGET)-$(ARCH)] \($(1)\) $$(notdir $$<)
 	$(CMDPREFIX)$(CC)                                                   \
@@ -572,7 +572,7 @@ define _make_cxx_object_rule
 
   .PRECIOUS : $(3)
 
-  $(3) : $(2) $(_$1_pchfile)
+  $(3) : $(2) $(_$1_pchfile) $($(1)_generated_headers)
 	$(CMDPREFIX)$(MKDIR) $($(1)_OBJDIR) $($(1)_DEPDIR)
 	@echo [CXX $(TARGET)-$(ARCH)] \($(1)\) $$(notdir $$<)
 	$(CMDPREFIX)$(CXX)                                                   \
@@ -641,7 +641,7 @@ define _make_cmm_object_rule
 
   .PRECIOUS : $(3)
 
-  $(3) : $(2) $(_$1_pchfile)
+  $(3) : $(2) $(_$1_pchfile) $($(1)_generated_headers)
 	@mkdir -p $($(1)_OBJDIR) $($(1)_DEPDIR)
 	@echo [CMM $(TARGET)-$(ARCH)] \($(1)\) $$(notdir $$<)
 	$(CMDPREFIX)$(CMM)                                                   \
