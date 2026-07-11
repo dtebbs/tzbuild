@@ -765,7 +765,20 @@ def write_manifest(dest, table, permissions, remove_permissions, intent_filters,
                       android:anyDensity="true"
                       />
     <uses-feature android:name="android.hardware.screen.landscape" />
-    <uses-feature android:glEsVersion="%GLES_VERSION%" />
+    """
+
+    if not options['vulkan']:
+        MANIFEST_2 += """
+    <uses-feature android:glEsVersion="%GLES_VERSION%" />"""
+    else:
+        # The legacy Google VR AAR declares GLES 2 as required. Vulkan-only
+        # apps keep its Java APIs for now but must remove that merged feature.
+        MANIFEST_2 += """
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        tools:node="remove" />"""
+
+    MANIFEST_2 += """
     <!-- SCREEN END -->
 
     """
