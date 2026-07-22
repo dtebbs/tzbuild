@@ -729,18 +729,39 @@ $(foreach mod,$(C_MODULES),$(eval \
 
 # each lib depends on the object files for that module
 
+# Android archives are assembled into a fresh temporary file and then moved
+# into place.  Besides making replacement atomic, this avoids retaining stale
+# members without first deleting the currently usable archive.
+ifeq ($(TARGET),android)
+define _make_lib_archive_commands
+	$(CMDPREFIX)tmpdir="$$$$(mktemp -d /tmp/tzbuild-ar.XXXXXX)"; \
+	  tmpfile="$$$$tmpdir/$$(notdir $$@)"; \
+	  $(AR) \
+       $(ARFLAGSPRE) \
+       $(arout)$$$$tmpfile \
+       $($(1)_OBJECTS) \
+       $(ARFLAGSPOST) && \
+	  mv -f "$$$$tmpfile" "$$@" && \
+	  rmdir "$$$$tmpdir"
+endef
+else
+define _make_lib_archive_commands
+	$(CMDPREFIX)$(RM) -f $$@
+	$(CMDPREFIX)$(AR) \
+     $(ARFLAGSPRE) \
+     $(arout)$$@ \
+     $($(1)_OBJECTS) \
+     $(ARFLAGSPOST)
+endef
+endif
+
 # 1 - mod
 define _make_lib_rule
 
   $($(1)_libfile) : $($(1)_OBJECTS)
 	$(CMDPREFIX)$(MKDIR) $$(dir $$@)
 	@echo [AR  $(TARGET)-$(ARCH)] $$(notdir $$@)
-	$(CMDPREFIX)$(RM) -f $$@
-	$(CMDPREFIX)$(AR) \
-     $(ARFLAGSPRE) \
-     $(arout)$$@ \
-     $($(1)_OBJECTS) \
-      $(ARFLAGSPOST) \
+	$(call _make_lib_archive_commands,$(1))
 
   .PHONY : $(1)
 
@@ -963,7 +984,8 @@ define _make_apk_native_rule
   .PHONY : _$(1)_make_$(3)_native_libs
   _$(1)_make_$(3)_native_libs :
 	+$(MAKE) ARCH=$(3) $($(1)_native)                   \
-      BINDIR=$(2)/libs/$(call _android_arch_name,$(3))
+      BINDIR=$(2)/libs/$(call _android_arch_name,$(3)) \
+      ANDROID_NATIVE_SYMBOLS_DIR=$(2)/native-debug-symbols
 
 endef
 

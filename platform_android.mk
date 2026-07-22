@@ -214,9 +214,19 @@ ifeq ($(C_SYMBOLS),1)
   CFLAGSPOST += -g -funwind-tables
 endif
 
+ifneq (,$(strip $(ANDROID_NATIVE_SYMBOLS_DIR)))
+dll-post = \
+  $(MKDIR) -p $(ANDROID_NATIVE_SYMBOLS_DIR)/$(ANDROID_ARCH_NAME) && \
+  $(NDK_TOOLBIN)/llvm-objcopy --strip-debug \
+    $($(1)_dllfile) \
+    $(ANDROID_NATIVE_SYMBOLS_DIR)/$(ANDROID_ARCH_NAME)/$(notdir $($(1)_dllfile)) && \
+  $(NDK_TOOLBIN)/llvm-strip --strip-unneeded \
+    $($(1)_dllfile)
+else
 dll-post = \
   $(NDK_TOOLBIN)/llvm-strip --strip-unneeded \
-  $($(1)_dllfile)
+    $($(1)_dllfile)
+endif
 CFLAGSPOST += -c
 
 CXXFLAGSPRE := $(CFLAGSPRE) -std=c++11 -Wno-reorder -fno-rtti
