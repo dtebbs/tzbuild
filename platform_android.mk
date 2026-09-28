@@ -287,6 +287,7 @@ DLLFLAGSPRE += -shared \
   -B$(NDK_LIBDIR)/$(ANDROID_NDK_API_NUM) \
   -nostdlib++ \
   -Wl,-z,max-page-size=16384 \
+  -Wl,-z,common-page-size=16384 \
   -Wl,-soname,$$(notdir $$@)
 # -v  # For verbose
 # -nostdlib
